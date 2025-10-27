@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.snowb": "json",
+        "system_error": "cpp"
+    }
+}
