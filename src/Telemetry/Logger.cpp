@@ -8,7 +8,7 @@ const uint16_t WIFI_PORT = 57476;
 
 bool udpStarted = false;
 
-void startLogger()
+void setupLogger()
 {
     Serial.begin(115200);
     while (!Serial)
@@ -51,7 +51,7 @@ void println(const Printable &message)
     Serial.println(message);
 };
 
-void loggerLoop() {
+void updateLogger() {
     if (udp.parsePacket()) {
         client = udp.remoteIP();
         print("[heartbeat detected from ");

@@ -4,7 +4,7 @@
  * @brief Initializes everything needed to log data.
  *
  */
-void startLogger();
+void setupLogger();
 
 /**
  * @brief Print a message to the logger
@@ -38,4 +38,4 @@ void println(const Printable &message);
  * @brief Everything that should go in the flight controller's loop
  * 
  */
-void loggerLoop();
+void updateLogger();

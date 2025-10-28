@@ -1,12 +1,21 @@
 #include <Arduino.h>
 #include "Telemetry/Logger.h"
+#include "Receiver/Receiver.h"
+#include "Motor/MotorController.h"
 
 void setup()
 {
-  startLogger();
+  setupLogger();
+
+  println("Setting up receiver...");
+  setupReceiver();
+  println(">>> Successfully set up receiver.");
+
+  println("Setting up motor controllers...");
+  setupMotorControllers();
 }
 
 void loop()
 {
-  loggerLoop();
+  updateLogger();
 }
