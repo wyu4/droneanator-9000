@@ -3,6 +3,9 @@ The "Droneanator 9000" is an autonomous unmanned aerial vehicle (UAV). It will a
 
 <img width="90%" alt="block diagram" src="design/BlockDiagram.png" />
 
+## IDE
+This project uses the PlatformIO extension in VSCode.
+
 ## Libraries
 
 | **Name** | **Link**                           |
