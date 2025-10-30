@@ -3,10 +3,33 @@
 #include "Credentials.h"
 
 WiFiUDP udp;
-IPAddress client;
+IPAddress client(0, 0, 0, 0);
 const uint16_t WIFI_PORT = 57476;
 
 bool udpStarted = false;
+
+/**
+ * @brief Send a buffer to the target client
+ *
+ * @param buffer Buffer
+ * @param size Buffer size
+ */
+void writeUDP(uint8_t *buffer, size_t size)
+{
+    udp.beginPacket(client, WIFI_PORT);
+    udp.write(buffer, size);
+    udp.endPacket();
+}
+
+/**
+ * @brief Send string data to the target client
+ *
+ * @param data String data
+ */
+inline void writeUDP(const char data[])
+{
+    writeUDP((uint8_t *)data, strlen(data));
+}
 
 void setupLogger()
 {
@@ -16,46 +39,39 @@ void setupLogger()
         delay(10);
     }
     delay(1000); // Give it a minimum of 1s to fully connect
-    println(">>> Serial port connected");
+    print(">>> Serial port connected");
 
-    println("Starting WiFi...");
+    print("Starting WiFi...");
     WiFi.mode(WIFI_AP);
     WiFi.softAP(SSID, PASSWORD, 1, 0, 1, false);
     print(">>> Hosting at [");
-    print(WiFi.softAPIP());
-    println("]");
+    print(WiFi.softAPIP().toString());
+    print("]\n");
 
-    println("Opening UDP...");
+    print("Opening UDP...");
     udp.begin(WIFI_PORT);
-    println("UDP opened.");
+    print("UDP opened.\n");
     udpStarted = true;
 }
 
 void print(const char message[])
 {
     Serial.print(message);
+    writeUDP(message);
 }
 
-void println(const char message[])
+void print(const String message)
 {
-    Serial.println(message);
-};
-
-void print(const Printable &message)
-{
-    Serial.print(message);
+    print(message.c_str());
 }
 
-void println(const Printable &message)
+void updateLogger()
 {
-    Serial.println(message);
-};
-
-void updateLogger() {
-    if (udp.parsePacket()) {
+    if (udp.parsePacket())
+    {
         client = udp.remoteIP();
         print("[heartbeat detected from ");
-        print(client);
-        println("]");
+        print(client.toString());
+        print("]\n");
     }
 }

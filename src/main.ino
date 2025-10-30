@@ -3,19 +3,43 @@
 #include "Receiver/Receiver.h"
 #include "Motor/MotorController.h"
 
+TaskHandle_t TelemetryTaskHandle = NULL;
+
+/**
+ * @brief The telemetry thread. This is completely cut off from the main thread to minimize stalling on the flight-controller's main functions
+ *
+ * @param parameter
+ */
+void TelemetryTask(void *parameter)
+{
+  for (;;)
+  {
+    updateLogger();
+  }
+}
+
 void setup()
 {
   setupLogger();
 
-  println("Setting up receiver...");
+  print("Setting up receiver...\n");
   setupReceiver();
-  println(">>> Successfully set up receiver.");
+  print(">>> Successfully set up receiver.\n");
 
-  println("Setting up motor controllers...");
+  print("Setting up motor controllers...\n");
   setupMotorControllers();
+
+  xTaskCreatePinnedToCore(
+      TelemetryTask,        // Task function
+      "TelemetryTask",      // Task name
+      10000,                // Stack size (bytes)
+      NULL,                 // Parameters
+      2,                    // Priority
+      &TelemetryTaskHandle, // Task handle
+      2                     // Core
+  );
 }
 
 void loop()
 {
-  updateLogger();
 }
