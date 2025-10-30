@@ -84,8 +84,6 @@ void updateLogger()
     {
         client = udp.remoteIP();
         printf("[heartbeat detected from %s]", client.toString());
-        delay(500);
-        println("Hello World!");
     }
 }
 
