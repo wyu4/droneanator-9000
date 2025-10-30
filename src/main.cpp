@@ -29,6 +29,7 @@ void setup()
   print("Setting up motor controllers...\n");
   setupMotorControllers();
 
+  // Create a task on Core 0 for handling logging
   xTaskCreatePinnedToCore(
       TelemetryTask,        // Task function
       "TelemetryTask",      // Task name
@@ -36,7 +37,7 @@ void setup()
       NULL,                 // Parameters
       1,                    // Priority
       &TelemetryTaskHandle, // Task handle
-      2                     // Core
+      0                     // Core
   );
 }
 
