@@ -34,7 +34,7 @@ void setup()
       "TelemetryTask",      // Task name
       10000,                // Stack size (bytes)
       NULL,                 // Parameters
-      2,                    // Priority
+      1,                    // Priority
       &TelemetryTaskHandle, // Task handle
       2                     // Core
   );
