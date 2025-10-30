@@ -12,10 +12,6 @@ IBusBM connection;
 
 void setupReceiver()
 {
-    while(!Serial2) {
-        delay(10);
-    }
-    delay(500);
     connection.begin(Serial2);
 }
 

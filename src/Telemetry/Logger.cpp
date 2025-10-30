@@ -7,6 +7,7 @@ IPAddress client(0, 0, 0, 0);
 const uint16_t WIFI_PORT = 57476;
 
 bool udpStarted = false;
+bool pairing = false;
 
 /**
  * @brief Send a buffer to the target client
@@ -16,6 +17,8 @@ bool udpStarted = false;
  */
 void writeUDP(uint8_t *buffer, size_t size)
 {
+    if (!udpStarted)
+        return;
     udp.beginPacket(client, WIFI_PORT);
     udp.write(buffer, size);
     udp.endPacket();
@@ -28,6 +31,7 @@ void writeUDP(uint8_t *buffer, size_t size)
  */
 inline void writeUDP(const char data[])
 {
+
     writeUDP((uint8_t *)data, strlen(data));
 }
 
@@ -39,39 +43,61 @@ void setupLogger()
         delay(10);
     }
     delay(1000); // Give it a minimum of 1s to fully connect
-    print(">>> Serial port connected");
+    println("Serial port connected.");
 
-    print("Starting WiFi...");
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP(SSID, PASSWORD, 1, 0, 1, false);
-    print(">>> Hosting at [");
-    print(WiFi.softAPIP().toString());
-    print("]\n");
-
-    print("Opening UDP...");
+    println("Starting WiFi...");
+    WiFi.softAP(SSID, PASSWORD);
+    printformat(">>> Hosting at [%s]", WiFi.softAPIP().toString());
+    delay(500);
+    println("Opening UDP...");
     udp.begin(WIFI_PORT);
-    print("UDP opened.\n");
+    println("UDP opened.");
     udpStarted = true;
 }
 
-void print(const char message[])
+void println(const char message[])
 {
-    Serial.print(message);
+    Serial.println(message);
     writeUDP(message);
 }
 
-void print(const String message)
+void println(const String message)
 {
-    print(message.c_str());
+    println(message.c_str());
+}
+
+void printformat(const char *format, ...)
+{
+    char buffer[256];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    Serial.println(buffer);
+    writeUDP(buffer);
 }
 
 void updateLogger()
 {
-    if (udp.parsePacket())
+    if (pairing && udp.parsePacket())
     {
         client = udp.remoteIP();
-        print("[heartbeat detected from ");
-        print(client.toString());
-        print("]\n");
+        printf("[heartbeat detected from %s]", client.toString());
+        delay(500);
+        println("Hello World!");
+    }
+}
+
+void setPairingMode(const bool enabled)
+{
+    pairing = enabled;
+    if (enabled)
+    {
+        println("Enabling pairing mode.");
+    }
+    else
+    {
+        println("Disabling pairing mode.");
     }
 }

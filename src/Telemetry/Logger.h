@@ -12,14 +12,22 @@ void setupLogger();
  *
  * @param message Message to log
  */
-void print(const char message[]);
+void println(const char message[]);
 
 /**
  * @brief Print a message to the logger
  *
  * @param message Message to log
  */
-void print(const String message);
+void println(const String message);
+
+/**
+ * @brief Print a formatted string to the logger
+ * 
+ * @param format Formatted string
+ * @param ... Parameters
+ */
+void printformat(const char *format, ...);
 
 
 /**
@@ -34,3 +42,10 @@ void sendIMU(float imu[7]);
  * 
  */
 void updateLogger();
+
+/**
+ * @brief Enable/Disable the drone's ability to connect with a laptop
+ * 
+ * @param enabled True if enabled, else False
+ */
+void setPairingMode(const bool enabled);
