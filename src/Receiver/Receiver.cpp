@@ -8,34 +8,34 @@ const uint8_t THROTTLE = 3;
 const uint8_t YAW = 4;
 const uint8_t ARMING = 5;
 
-IBusBM connection;
+IBusBM IBus;
 
 void setupReceiver()
 {
-    connection.begin(Serial2);
+    IBus.begin(Serial2, IBUSBM_NOTIMER);
 }
 
 int readReceiverRoll()
 {
-    return connection.readChannel(ROLL);
+    return IBus.readChannel(ROLL);
 }
 
 int readReceiverPitch()
 {
-    return connection.readChannel(PITCH);
+    return IBus.readChannel(PITCH);
 }
 
 int readReceiverYaw()
 {
-    return connection.readChannel(YAW);
+    return IBus.readChannel(YAW);
 }
 
 int readReceiverThrottle()
 {
-    return connection.readChannel(THROTTLE);
+    return IBus.readChannel(THROTTLE);
 }
 
 int readReceiverArming()
 {
-    return connection.readChannel(ARMING);
+    return IBus.readChannel(ARMING);
 }

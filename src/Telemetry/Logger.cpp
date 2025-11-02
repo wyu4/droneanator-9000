@@ -1,6 +1,6 @@
 #include <WiFi.h>
 #include "Logger.h"
-#include "Credentials.h"
+//#include "Credentials.h"
 
 WiFiUDP udp;
 IPAddress client(0, 0, 0, 0);
@@ -46,7 +46,7 @@ void setupLogger()
     println("Serial port connected.");
 
     println("Starting WiFi...");
-    WiFi.softAP(SSID, PASSWORD);
+    //WiFi.softAP(SSID, PASSWORD);
     printformat(">>> Hosting at [%s]", WiFi.softAPIP().toString());
     delay(500);
     println("Opening UDP...");
