@@ -2,11 +2,9 @@
 #include <IBusBM.h>
 #include "Receiver.h"
 
-const uint8_t ROLL = 1;
-const uint8_t PITCH = 2;
-const uint8_t THROTTLE = 3;
-const uint8_t YAW = 4;
-const uint8_t ARMING = 5;
+const uint8_t ROLL_CHANNEL = 1;
+const uint8_t PITCH_CHANNEL = 2;
+const uint8_t YAW_CHANNEL = 3;
 
 IBusBM IBus;
 
@@ -15,27 +13,18 @@ void setupReceiver()
     IBus.begin(Serial2, IBUSBM_NOTIMER);
 }
 
-int readReceiverRoll()
-{
-    return IBus.readChannel(ROLL);
+void updateReceiver() {
+    IBus.loop();
 }
 
-int readReceiverPitch()
-{
-    return IBus.readChannel(PITCH);
+int getDesiredRoll() {
+    return IBus.readChannel(ROLL_CHANNEL);
 }
 
-int readReceiverYaw()
-{
-    return IBus.readChannel(YAW);
+int getDesiredPitch() {
+    return IBus.readChannel(PITCH_CHANNEL);
 }
 
-int readReceiverThrottle()
-{
-    return IBus.readChannel(THROTTLE);
-}
-
-int readReceiverArming()
-{
-    return IBus.readChannel(ARMING);
+int getDesiredYaw() {
+    return IBus.readChannel(YAW_CHANNEL);
 }

@@ -4,37 +4,32 @@
  */
 void setupReceiver();
 
-/**
- * @brief Reads the roll channel of the iBus connection with the receiver
- * 
- * @return roll input
- */
-int readReceiverRoll();
+
 
 /**
- * @brief Reads the pitch channel of the iBus connection with the receiver
+ * @brief Everything that should go in the flight controller's loop
  * 
- * @return pitch input
  */
-int readReceiverPitch();
+void updateReceiver();
 
 /**
- * @brief Reads the yaw channel of the iBus connection with the receiver
+ * @brief Get the desired roll rate
  * 
- * @return yaw input
+ * @return int Microseconds
  */
-int readReceiverYaw();
+int getDesiredRoll();
 
 /**
- * @brief Reads the throttle channel of the iBus connection with the receiver
+ * @brief Get the desired pitch rate
  * 
- * @return throttle input
+ * @return int Microseconds
  */
-int readReceiverThrottle();
+int getDesiredPitch();
+
 
 /**
- * @brief Reads the throttle channel of the iBus connection with the receiver
+ * @brief Get the desired yaw rate
  * 
- * @return throttle input
+ * @return int Microseconds
  */
-int readReceiverArming();
+int getDesiredYaw();
