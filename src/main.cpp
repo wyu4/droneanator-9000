@@ -5,15 +5,15 @@
 #include <IBusBM.h>
 
 /*
-frontLeft output = throttle - roll - pitch - yaw
-frontRight output = throttle - roll + pitch + yaw
-backLeft output = throttle + roll + pitch - yaw
-backRight output = throttle + roll - pitch + yaw
+motor1 output = throttle - roll - pitch - yaw
+motor2 output = throttle - roll + pitch + yaw
+motor3 output = throttle + roll + pitch - yaw
+motor4 output = throttle + roll - pitch + yaw
 */
-MotorController frontLeft(1);
-MotorController frontRight(2);
-MotorController backLeft(42);
-MotorController backRight(41);
+MotorController motor1(1); // Front right (clockwise)
+MotorController motor2(2); // Back right (counter-clockwise)
+MotorController motor3(42); // Back left (clockwise)
+MotorController motor4(41); // Front left (counter-clockwise)
 
 void setup()
 {
@@ -26,10 +26,10 @@ void setup()
 
   println("Setting up motor controllers...");
   setupMotorControllers();
-  frontLeft.stop();
-  frontRight.stop();
-  backLeft.stop();
-  backRight.stop();
+  motor1.stop();
+  motor2.stop();
+  motor3.stop();
+  motor4.stop();
   println(">> Successfully set up motor controllers...");
 }
 

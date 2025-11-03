@@ -8,7 +8,8 @@ const int MID_RATE = 1500; // (MAX_RATE + MIN_RATE) / 2
 
 const uint8_t ROLL_CHANNEL = 1;
 const uint8_t PITCH_CHANNEL = 2;
-const uint8_t YAW_CHANNEL = 3;
+const uint8_t THROTTLE_CHANNEL = 3;
+const uint8_t YAW_CHANNEL = 4;
 
 IBusBM IBus;
 
@@ -17,18 +18,27 @@ void setupReceiver()
     IBus.begin(Serial2, IBUSBM_NOTIMER);
 }
 
-void updateReceiver() {
+void updateReceiver()
+{
     IBus.loop();
 }
 
-int getDesiredRoll() {
+int getDesiredRoll()
+{
     return IBus.readChannel(ROLL_CHANNEL);
 }
 
-int getDesiredPitch() {
+int getDesiredPitch()
+{
     return IBus.readChannel(PITCH_CHANNEL);
 }
 
-int getDesiredYaw() {
+int getDesiredThrottle()
+{
+    return IBus.readChannel(THROTTLE_CHANNEL);
+}
+
+int getDesiredYaw()
+{
     return IBus.readChannel(YAW_CHANNEL);
 }
