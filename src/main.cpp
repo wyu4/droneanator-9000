@@ -42,7 +42,7 @@ void loop()
   const int desiredPitch = getDesiredPitch();
   const int desiredYaw = getDesiredYaw();
 
-  printf("Roll: %s, Pitch: %s, Yaw: %s", desiredRoll, desiredPitch, desiredYaw);
+  printformat("Roll: %s, Pitch: %s, Yaw: %s", desiredRoll, desiredPitch, desiredYaw);
 }
 
 // IBusBM IBus; // Create an IBusBM object
