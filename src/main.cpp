@@ -10,10 +10,12 @@ motor2 output = throttle - roll + pitch + yaw
 motor3 output = throttle + roll + pitch - yaw
 motor4 output = throttle + roll - pitch + yaw
 */
-MotorController motor1(1); // Front right (clockwise)
-MotorController motor2(2); // Back right (counter-clockwise)
+MotorController motor1(1);  // Front right (clockwise)
+MotorController motor2(2);  // Back right (counter-clockwise)
 MotorController motor3(42); // Back left (clockwise)
 MotorController motor4(41); // Front left (counter-clockwise)
+
+bool preventThrottle = true;
 
 void setup()
 {
@@ -38,11 +40,28 @@ void loop()
   updateReceiver();
   updateLogger();
 
+  const int desiredThrottle = getDesiredThrottle();
   const int desiredRoll = getDesiredRoll();
   const int desiredPitch = getDesiredPitch();
   const int desiredYaw = getDesiredYaw();
 
-  printformat("Roll: %s, Pitch: %s, Yaw: %s", desiredRoll, desiredPitch, desiredYaw);
+  if (preventThrottle)
+  {
+    if (desiredThrottle < CONTROLLER_MIN_RATE)
+    {
+      println("Waiting for valid throttle value.");
+      return;
+    }
+
+    if (desiredThrottle > CONTROLLER_MID_RATE)
+    {
+      println("Please set the throttle stick to the lowest position.");
+      return;
+    }
+    preventThrottle = false;
+  }
+
+  printformat("Roll: %d, Pitch: %d, Yaw: %d, Throttle: %d", desiredRoll, desiredPitch, desiredYaw, desiredThrottle);
 }
 
 // IBusBM IBus; // Create an IBusBM object

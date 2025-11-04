@@ -1,11 +1,11 @@
 #include <Arduino.h>
 
-const uint32_t PWM_FREQUENCY = 250; // Hz
-const uint32_t PWM_RESOLUTION = 12; // Bits, meaning a min of 0, and max of 2^(whatever this variable is set to)
-const int PWM_MIN = 0;              // Should be zero
-const int PWM_MAX = 4000;           // ~2 ^ PWM_RESOLUTION
-const int PWM_MID = 2000;           // (MAX + MIN) / 2
-const float PWM_MULTIPLIER = 1.024; // (2 ^ PWM_RESOLUTION) / PWM_MAX
+const uint32_t PWM_FREQUENCY = 60; // Hz
+const uint32_t PWM_RESOLUTION = 11; // Bits, meaning a min of 0, and max of 2^(whatever this variable is set to)
+const int PWM_MIN = 1000;              // Should be zero microseconds
+const int PWM_MAX = 2000;           // ~2 ^ PWM_RESOLUTION microseconds
+const int PWM_MID = 1500;           // (MAX + MIN) / 2 microseconds
+const float PWM_MULTIPLIER = 1.024; // (2 ^ PWM_RESOLUTION) / PWM_MAX microseconds
 
 /**
  * @brief Initializes everything needed to communicate with motor controllers.

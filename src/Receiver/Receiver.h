@@ -1,3 +1,7 @@
+const int CONTROLLER_MIN_RATE = 1000; // Minimum output rate of the controller (microseconds)
+const int CONTROLLER_MAX_RATE = 2000; // Maximium output rate of the controller (microseconds)
+const int CONTROLLER_MID_RATE = 1500; // (MAX_RATE + MIN_RATE) / 2
+
 /**
  * @brief Initializes everything needed to receive data from the pilot.
  *
