@@ -14,10 +14,11 @@ MotorController::MotorController(const uint8_t pin) : pin(pin)
 
 void MotorController::set(int value)
 {
-    analogWrite(this->pin, PWM_MULTIPLIER * value);
+    int constrained = constrain(value - PWM_MIN, 0, PWM_MAX - PWM_MIN);
+    analogWrite(this->pin, PWM_MULTIPLIER * constrained);
 }
 
 void MotorController::stop()
 {
-    this->set(PWM_MID);
+    this->set(0);
 }
