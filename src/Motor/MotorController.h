@@ -1,9 +1,9 @@
 #include <Arduino.h>
 
-const uint32_t PWM_FREQUENCY = 60; // Hz
-const uint32_t PWM_RESOLUTION = 10; // Bits, meaning a min of 0, and max of 2^(whatever this variable is set to)
-const int PWM_MIN = 1000;              // Should be zero microseconds
-const int PWM_MAX = 2000;           // ~(2 ^ PWM_RESOLUTION) + PWM_MIN microseconds
+const uint32_t PWM_FREQUENCY = 250; // Hz
+const uint32_t PWM_RESOLUTION = 12; // Bits, meaning a min of 0, and max of 2^(whatever this variable is set to)
+const int PWM_MIN = 0;              // Should be zero microseconds
+const int PWM_MAX = 4000;           // ~(2 ^ PWM_RESOLUTION) + PWM_MIN microseconds
 const float PWM_MULTIPLIER = 1.024; // (2 ^ PWM_RESOLUTION) / PWM_MAX microseconds
 
 /**

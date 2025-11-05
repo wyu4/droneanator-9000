@@ -11,9 +11,9 @@ motor3 output = throttle + roll + pitch - yaw
 motor4 output = throttle + roll - pitch + yaw
 */
 MotorController motor1(1);  // Front right (clockwise)
-MotorController motor2(2);  // Back right (counter-clockwise)
-MotorController motor3(42); // Back left (clockwise)
-MotorController motor4(41); // Front left (counter-clockwise)
+// MotorController motor2(2);  // Back right (counter-clockwise)
+// MotorController motor3(42); // Back left (clockwise)
+// MotorController motor4(41); // Front left (counter-clockwise)
 
 bool preventThrottle = true;
 
@@ -29,9 +29,9 @@ void setup()
   println("Setting up motor controllers...");
   setupMotorControllers();
   motor1.stop();
-  motor2.stop();
-  motor3.stop();
-  motor4.stop();
+  // motor2.stop();
+  // motor3.stop();
+  // motor4.stop();
   println(">> Successfully set up motor controllers...");
 }
 
@@ -61,7 +61,8 @@ void loop()
     preventThrottle = false;
   }
 
-  printformat("Roll: %d, Pitch: %d, Yaw: %d, Throttle: %d", desiredRoll, desiredPitch, desiredYaw, desiredThrottle);
+  // printformat("Roll: %d, Pitch: %d, Yaw: %d, Throttle: %d", desiredRoll, desiredPitch, desiredYaw, desiredThrottle);
+  motor1.set(desiredThrottle);
 }
 
 // IBusBM IBus; // Create an IBusBM object
