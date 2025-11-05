@@ -61,7 +61,7 @@ void loop()
     preventThrottle = false;
   }
 
-  // printformat("Roll: %d, Pitch: %d, Yaw: %d, Throttle: %d", desiredRoll, desiredPitch, desiredYaw, desiredThrottle);
+  printformat("Roll: %d, Pitch: %d, Yaw: %d, Throttle: %d", desiredRoll, desiredPitch, desiredYaw, desiredThrottle);
   motor1.set(desiredThrottle);
 }
 

@@ -15,7 +15,7 @@ MotorController::MotorController(const uint8_t pin) : pin(pin)
 void MotorController::set(int value)
 {
     int constrained = constrain(value, PWM_MIN, PWM_MAX);
-    Serial.println(constrained);
+    // Serial.println(constrained);
     analogWrite(this->pin, PWM_MULTIPLIER * constrained);
 }
 
