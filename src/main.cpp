@@ -30,14 +30,14 @@ void setup()
   println(">>> Successfully set up receiver.");
 
   println("Setting up IMU...");
-  if (!setupIMU())
-  {
-    println(">> Could not set up IMU.");
-    while (true)
-    {
-      delay(1);
-    }
-  }
+  // if (!setupIMU())
+  // {
+  //   println(">> Could not set up IMU.");
+  //   while (true)
+  //   {
+  //     delay(1);
+  //   }
+  // }
   println(">> Successfully set up IMU...");
 
   println("Setting up motor controllers...");
@@ -58,7 +58,7 @@ void loop()
   const int desiredRoll = getDesiredRoll();
   const int desiredPitch = getDesiredPitch();
   const int desiredYaw = getDesiredYaw();
-  const imu::Vector<3> measuredEuler = getMeasuredEuler();
+  // const imu::Vector<3> measuredEuler = getMeasuredEuler();
 
   if (preventThrottle)
   {
