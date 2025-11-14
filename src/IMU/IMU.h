@@ -10,7 +10,7 @@ bool setupIMU();
 /**
  * @brief Get the Euler object fused by the IMU
  * 
- * @return imu::Vector<3> 
+ * @return imu::Vector<3> -
  */
 imu::Vector<3> getMeasuredEuler();
 
