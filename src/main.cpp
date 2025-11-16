@@ -38,11 +38,14 @@ void setup()
     //   delay(1);
     // }
   }
-  println(">> Successfully set up IMU...");
+  else
+  {
+    println(">> Successfully set up IMU...");
+  }
 
   println("Setting up motor controllers...");
-  setupMotorControllers();
-  motor1.stop();
+  // setupMotorControllers();
+  // motor1.stop();
   // motor2.stop();
   // motor3.stop();
   // motor4.stop();
@@ -51,16 +54,17 @@ void setup()
 
 void loop()
 {
-  updateReceiver();
-  updateLogger();
+  // updateReceiver();
+  // updateLogger();
 
-  const int desiredThrottle = getDesiredThrottle();
-  const int desiredRoll = getDesiredRoll();
-  const int desiredPitch = getDesiredPitch();
-  const int desiredYaw = getDesiredYaw();
+  // const int desiredThrottle = getDesiredThrottle();
+  // const int desiredRoll = getDesiredRoll();
+  // const int desiredPitch = getDesiredPitch();
+  // const int desiredYaw = getDesiredYaw();
+  delay(500);
   const imu::Vector<3> measuredEuler = getMeasuredEuler();
 
-  printformat("Pitch: %d, Roll: %d, Yaw: %d", measuredEuler.x(), measuredEuler.y(), measuredEuler.z());
+  Serial.printf("Pitch: %d, Roll: %d, Yaw: %d\n", measuredEuler.x(), measuredEuler.y(), measuredEuler.z());
 
   // if (preventThrottle)
   // {
