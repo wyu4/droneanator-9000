@@ -61,10 +61,12 @@ void loop()
   // const int desiredRoll = getDesiredRoll();
   // const int desiredPitch = getDesiredPitch();
   // const int desiredYaw = getDesiredYaw();
-  delay(500);
-  const imu::Vector<3> measuredEuler = getMeasuredEuler();
+  
+  delay(100);
+  updateIMU();
+  // const imu::Vector<3> measuredEuler = getMeasuredQuaternion();
 
-  Serial.printf("Pitch: %d, Roll: %d, Yaw: %d\n", measuredEuler.x(), measuredEuler.y(), measuredEuler.z());
+  Serial.printf("X: %f, Y: %f, Z: %f\n", getIMURawAxis(0), getIMURawAxis(1), getIMURawAxis(2));
 
   // if (preventThrottle)
   // {

@@ -7,6 +7,10 @@
  */
 bool setupIMU();
 
+float getIMURawAxis(int axis);
+
+void updateIMU();
+
 /**
  * @brief Get the Euler object fused by the IMU
  * 
