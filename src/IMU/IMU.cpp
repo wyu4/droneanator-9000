@@ -31,8 +31,6 @@ void readStatus()
 
 bool setupIMU()
 {
-    pinMode(19, INPUT_PULLUP);
-    pinMode(20, INPUT_PULLUP);
     Wire.begin(19, 20, 100000);
     if (!bno.begin(adafruit_bno055_opmode_t::OPERATION_MODE_IMUPLUS))
     {
