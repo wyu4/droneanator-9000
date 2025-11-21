@@ -16,8 +16,6 @@ MotorController motor1(1); // Front right (clockwise)
 // MotorController motor3(42); // Back left (clockwise)
 // MotorController motor4(41); // Front left (counter-clockwise)
 
-PID testController = PID(10, 20, 10);
-
 bool preventThrottle = true;
 
 void setup()
@@ -30,19 +28,22 @@ void setup()
   println(">>> Successfully set up receiver.");
 
   println("Setting up IMU...");
-  // if (!setupIMU())
-  // {
-  //   println(">> Could not set up IMU.");
-  //   while (true)
-  //   {
-  //     delay(1);
-  //   }
-  // }
-  println(">> Successfully set up IMU...");
+  if (!setupIMU())
+  {
+    while(true) {
+      println(">> Could not set up IMU. Please reboot.");
+      delay(1000);
+    }
+  }
+  else
+  {
+    println(">> Successfully set up IMU...");
+    calibrateIMU();
+  }
 
   println("Setting up motor controllers...");
-  setupMotorControllers();
-  motor1.stop();
+  // setupMotorControllers();
+  // motor1.stop();
   // motor2.stop();
   // motor3.stop();
   // motor4.stop();
@@ -51,33 +52,38 @@ void setup()
 
 void loop()
 {
-  updateReceiver();
-  updateLogger();
+  // updateReceiver();
+  // updateLogger();
 
-  const int desiredThrottle = getDesiredThrottle();
-  const int desiredRoll = getDesiredRoll();
-  const int desiredPitch = getDesiredPitch();
-  const int desiredYaw = getDesiredYaw();
-  // const imu::Vector<3> measuredEuler = getMeasuredEuler();
+  // const int desiredThrottle = getDesiredThrottle();
+  // const int desiredRoll = getDesiredRoll();
+  // const int desiredPitch = getDesiredPitch();
+  // const int desiredYaw = getDesiredYaw();
+  delay(100);
+  imu::Vector<3> measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
+  measuredEuler.toDegrees();
 
-  if (preventThrottle)
-  {
-    if (desiredThrottle < CONTROLLER_MIN_RATE)
-    {
-      println("Waiting for valid throttle value.");
-      return;
-    }
+  // Serial.printf("X: %f, Y: %f, Z: %f\n", orientation[0], orientation[1], orientation[2]);
+  Serial.printf("X: %.2f, Y: %.2f, Z: %.2f\n", measuredEuler.x(), measuredEuler.y(), measuredEuler.z());
 
-    if (desiredThrottle > CONTROLLER_MID_RATE)
-    {
-      println("Please set the throttle stick to the lowest position.");
-      return;
-    }
-    preventThrottle = false;
-  }
+  // if (preventThrottle)
+  // {
+  //   if (desiredThrottle < CONTROLLER_MIN_RATE)
+  //   {
+  //     println("Waiting for valid throttle value.");
+  //     return;
+  //   }
 
-  printformat("Roll: %d, Pitch: %d, Yaw: %d, Throttle: %d", desiredRoll, desiredPitch, desiredYaw, desiredThrottle);
-  motor1.set(desiredThrottle);
+  //   if (desiredThrottle > CONTROLLER_MID_RATE)
+  //   {
+  //     println("Please set the throttle stick to the lowest position.");
+  //     return;
+  //   }
+  //   preventThrottle = false;
+  // }
+
+  // printformat("Roll: %d, Pitch: %d, Yaw: %d, Throttle: %d", desiredRoll, desiredPitch, desiredYaw, desiredThrottle);
+  // motor1.set(desiredThrottle);
 }
 
 // IBusBM IBus; // Create an IBusBM object
