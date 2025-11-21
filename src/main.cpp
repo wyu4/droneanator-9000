@@ -16,8 +16,6 @@ MotorController motor1(1); // Front right (clockwise)
 // MotorController motor3(42); // Back left (clockwise)
 // MotorController motor4(41); // Front left (counter-clockwise)
 
-PID testController = PID(10, 20, 10);
-
 bool preventThrottle = true;
 
 void setup()
@@ -32,15 +30,15 @@ void setup()
   println("Setting up IMU...");
   if (!setupIMU())
   {
-    println(">> Could not set up IMU.");
-    // while (true)
-    // {
-    //   delay(1);
-    // }
+    while(true) {
+      println(">> Could not set up IMU. Please reboot.");
+      delay(1000);
+    }
   }
   else
   {
     println(">> Successfully set up IMU...");
+    calibrateIMU();
   }
 
   println("Setting up motor controllers...");
@@ -61,12 +59,12 @@ void loop()
   // const int desiredRoll = getDesiredRoll();
   // const int desiredPitch = getDesiredPitch();
   // const int desiredYaw = getDesiredYaw();
-  
   delay(100);
-  updateIMU();
-  // const imu::Vector<3> measuredEuler = getMeasuredQuaternion();
+  imu::Vector<3> measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
+  measuredEuler.toDegrees();
 
-  Serial.printf("X: %f, Y: %f, Z: %f\n", getIMURawAxis(0), getIMURawAxis(1), getIMURawAxis(2));
+  // Serial.printf("X: %f, Y: %f, Z: %f\n", orientation[0], orientation[1], orientation[2]);
+  Serial.printf("X: %.2f, Y: %.2f, Z: %.2f\n", measuredEuler.x(), measuredEuler.y(), measuredEuler.z());
 
   // if (preventThrottle)
   // {
