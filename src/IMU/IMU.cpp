@@ -29,9 +29,11 @@ void readStatus()
     bno.getSystemStatus(&systemStatus, &testResult, &systemError);
 }
 
+
+
 bool setupIMU()
 {
-    Wire.begin(19, 20, 100000);
+    Wire.begin(20, 19, 100000);
     if (!bno.begin(adafruit_bno055_opmode_t::OPERATION_MODE_IMUPLUS))
     {
         return false;

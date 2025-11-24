@@ -10,7 +10,9 @@ public:
     const float kD;           // The tuned d-value
     float setpoint = 0;       // The current setpoint of the PID controller
     float errorSumClamp = -1; // The clamp for the error sum, negative to disable clamping
+    float outputClamp = -1;
     int minDeltaTime = 0;     // The minimum value that deltaTime is allowed to approach (but never reach) for derivative calculations
+    float period = -1;
 
     /**
      * @brief Construct a new PID object
@@ -40,7 +42,7 @@ public:
      * @param feedback Current input value
      * @return PID output
      */
-    float calculate(float feedback);
+    float calculate(const float &feedback);
 
 private:
     float errorSum = 0;       // The total sum of past errors

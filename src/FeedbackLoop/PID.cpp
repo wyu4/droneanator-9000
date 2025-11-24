@@ -16,19 +16,25 @@ void PID::reset()
 {
     this->errorSum = 0;
     this->lastError = 0;
-    this->lastMillis = millis();
 }
 
-float PID::calculate(float feedback)
+float PID::calculate(const float &feedback)
 {
-    // Storing time
+    // Storing time (this is inefficfent :D)
     const unsigned long currentTime = millis();
     long deltaTime = currentTime - this->lastMillis;
     if (deltaTime <= this->minDeltaTime)
         deltaTime = this->minDeltaTime + 1; // Make sure the delta time is a valid value, and rewrite to 1ms if not
     this->lastMillis = currentTime;
 
-    const float currentError = this->setpoint - feedback;
+    float currentError = this->setpoint - feedback;
+    if (period > 0)
+    {
+        while (currentError > (period / 2))
+            currentError -= (period);
+        while (currentError < -(period / 2))
+            currentError += (period);
+    }
 
     // Add the average of the current and last error to account for inconsistent loop times
     if (this->errorSumClamp < 0) // clamp value is negative, add without clamping
@@ -37,19 +43,7 @@ float PID::calculate(float feedback)
     }
     else // Clamp the error sum
     {
-        const float newErrorSum = this->errorSum + (((currentError + this->lastError) * deltaTime) / 2.0);
-        if (newErrorSum > this->errorSumClamp)
-        {
-            this->errorSum = this->errorSumClamp;
-        }
-        else if (newErrorSum < -this->errorSumClamp)
-        {
-            this->errorSum = -this->errorSumClamp;
-        }
-        else
-        {
-            this->errorSum = newErrorSum;
-        }
+        this->errorSum = constrain(this->errorSum + (((currentError + this->lastError) * deltaTime) / 2.0), -this->errorSumClamp, this->errorSumClamp);
     }
 
     // PID calculations
@@ -59,5 +53,13 @@ float PID::calculate(float feedback)
 
     this->lastError = currentError;
 
-    return pTerm + iTerm + dTerm;
+    float output = pTerm + iTerm + dTerm;
+
+    // Clamping the output
+    if (this->outputClamp >= 0)
+    {
+        output = constrain(output, -this->outputClamp, this->outputClamp);
+    }
+
+    return output;
 }
