@@ -28,6 +28,7 @@ PID yawController(0.001, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
+unsigned long lastTime = 0;
 
 int desiredThrottle = 0;
 int desiredRoll = 0;
@@ -40,6 +41,18 @@ float measuredPitch = 0;
 float measuredYaw = 0;
 
 bool preventThrottle = true;
+
+/**
+ * @brief Stop all motors
+ *
+ */
+inline void stop()
+{
+  motor1.stop();
+  motor2.stop();
+  motor3.stop();
+  motor4.stop();
+}
 
 void setup()
 {
@@ -74,16 +87,22 @@ void setup()
   rollController.outputClamp = 60;
   yawController.outputClamp = 60;
 
+  lastTime = millis();
+
   setupMotorControllers();
-  motor1.stop();
-  motor2.stop();
-  motor3.stop();
-  motor4.stop();
+  stop();
   println(">> Successfully set up motor controllers...");
 }
 
 void loop()
 {
+  const unsigned long currentTime = millis();
+  unsigned long deltaTime = currentTime - lastTime;
+  if (deltaTime == 0) {
+    deltaTime += 1;
+  }
+  lastTime = currentTime;
+
   updateReceiver();
   // updateLogger();
 
@@ -98,13 +117,20 @@ void loop()
       return;
     }
 
-    if (desiredThrottle > CONTROLLER_MID_RATE)
+    if (desiredThrottle > CONTROLLER_MIN_RATE + 50)
     {
       println("Please set the throttle stick to the lowest position.");
       delay(500);
       return;
     }
     preventThrottle = false;
+  }
+
+  // Make sure motors stop (ignoring PID controllers) when throttle is at a low state
+  if (desiredThrottle < CONTROLLER_MIN_RATE + 50)
+  {
+    stop();
+    return;
   }
 
   if (!hoverOnly)
@@ -128,9 +154,9 @@ void loop()
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
 
-  pidPitchOutput = pitchController.calculate(measuredPitch);
-  pidYawOutput = rollController.calculate(measuredYaw);
-  pidRollOutput = yawController.calculate(measuredRoll);
+  pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
+  pidYawOutput = rollController.calculate(measuredYaw, deltaTime);
+  pidRollOutput = yawController.calculate(measuredRoll, deltaTime);
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
 

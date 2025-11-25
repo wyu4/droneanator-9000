@@ -41,12 +41,12 @@ public:
      * @brief Calculates the output given a feedback value
      *
      * @param feedback Current input value
+     * @param deltaTime Milliseconds elapsed since last loop run
      * @return PID output
      */
-    float calculate(const float &feedback);
+    float calculate(const float &feedback, const unsigned long &deltaTime);
 
 private:
     float errorSum = 0;       // The total sum of past errors
     float lastError = 0;      // The previous measured error
-    unsigned long lastMillis; // The timestamp (in milliseconds) for the last time the controller was updated
 };

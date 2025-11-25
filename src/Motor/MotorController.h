@@ -39,7 +39,7 @@ struct MotorController
     void set(int value);
 
     /**
-     * @brief Stops the motor by sending a duty cycle of 50%.
+     * @brief Stops the motor by sending a duty cycle of 0%.
      *
      */
     void stop();

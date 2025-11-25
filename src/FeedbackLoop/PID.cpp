@@ -3,7 +3,6 @@
 
 PID::PID(float p, float i, float d) : kP(p), kI(i), kD(d)
 {
-    this->lastMillis = millis();
 }
 
 void PID::setSetpoint(float setpoint)
@@ -18,15 +17,8 @@ void PID::reset()
     this->lastError = 0;
 }
 
-float PID::calculate(const float &feedback)
+float PID::calculate(const float &feedback, const unsigned long &deltaTime)
 {
-    // Storing time (this is inefficfent :D)
-    const unsigned long currentTime = millis();
-    long deltaTime = currentTime - this->lastMillis;
-    if (deltaTime <= this->minDeltaTime)
-        deltaTime = this->minDeltaTime + 1; // Make sure the delta time is a valid value, and rewrite to 1ms if not
-    this->lastMillis = currentTime;
-
     float currentError = this->setpoint - feedback;
     if (tolerance >= 0 && abs(currentError) <= tolerance)
     {
