@@ -28,13 +28,18 @@ float PID::calculate(const float &feedback)
     this->lastMillis = currentTime;
 
     float currentError = this->setpoint - feedback;
-    if (period > 0)
+    if (tolerance >= 0 && abs(currentError) <= tolerance)
     {
-        while (currentError > (period / 2))
-            currentError -= (period);
-        while (currentError < -(period / 2))
-            currentError += (period);
+        return 0;
     }
+
+    // if (period > 0)
+    // {
+    //     while (currentError > (period / 2))
+    //         currentError -= (period);
+    //     while (currentError < -(period / 2))
+    //         currentError += (period);
+    // }
 
     // Add the average of the current and last error to account for inconsistent loop times
     if (this->errorSumClamp < 0) // clamp value is negative, add without clamping
@@ -56,10 +61,7 @@ float PID::calculate(const float &feedback)
     float output = pTerm + iTerm + dTerm;
 
     // Clamping the output
-    if (this->outputClamp >= 0)
-    {
-        output = constrain(output, -this->outputClamp, this->outputClamp);
-    }
+    output = constrain(output, -this->outputClamp, this->outputClamp);
 
     return output;
 }

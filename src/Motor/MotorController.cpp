@@ -21,5 +21,5 @@ void MotorController::set(int value)
 
 void MotorController::stop()
 {
-    this->set(0);
+    this->set(1000);
 }

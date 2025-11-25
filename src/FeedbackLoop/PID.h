@@ -13,6 +13,7 @@ public:
     float outputClamp = -1;
     int minDeltaTime = 0;     // The minimum value that deltaTime is allowed to approach (but never reach) for derivative calculations
     float period = -1;
+    float tolerance = -1;
 
     /**
      * @brief Construct a new PID object

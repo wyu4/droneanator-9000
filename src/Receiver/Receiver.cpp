@@ -6,8 +6,9 @@ const uint8_t ROLL_CHANNEL = 0;
 const uint8_t PITCH_CHANNEL = 1;
 const uint8_t THROTTLE_CHANNEL = 2;
 const uint8_t YAW_CHANNEL = 3;
-const float multiplier = 0.02;
-const int offset = 1500;
+const float tiltMultiplier = 0.02;
+const int tiltOffset = 1500; // -500 to 500
+const uint16_t maxThrottle = 1800;
 
 IBusBM IBus;
 
@@ -25,20 +26,20 @@ void updateReceiver()
 
 int getDesiredRoll()
 {
-    return (IBus.readChannel(ROLL_CHANNEL) - offset) * multiplier;
+    return (IBus.readChannel(ROLL_CHANNEL) - tiltOffset) * tiltMultiplier;
 }
 
 int getDesiredPitch()
 {
-    return (IBus.readChannel(PITCH_CHANNEL) - offset) * multiplier;
+    return (IBus.readChannel(PITCH_CHANNEL) - tiltOffset) * tiltMultiplier;
 }
 
 int getDesiredThrottle()
 {
-    return IBus.readChannel(THROTTLE_CHANNEL);
+    return min(IBus.readChannel(THROTTLE_CHANNEL), maxThrottle);
 }
 
 int getDesiredYaw()
 {
-    return (IBus.readChannel(YAW_CHANNEL) - offset) * multiplier;
+    return (IBus.readChannel(YAW_CHANNEL) - tiltOffset) * tiltMultiplier;
 }
