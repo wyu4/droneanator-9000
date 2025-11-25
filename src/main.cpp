@@ -5,6 +5,8 @@
 #include "Motor/MotorController.h"
 #include "FeedbackLoop/PID.h"
 
+const boolean hoverOnly = true;
+
 /*
   motor1 output = throttle - roll - pitch - yaw
   motor2 output = throttle - roll + pitch + yaw
@@ -105,23 +107,26 @@ void loop()
     preventThrottle = false;
   }
 
-  desiredRoll = getDesiredRoll();
-  desiredPitch = getDesiredPitch();
-  desiredYaw = getDesiredYaw();
+  if (!hoverOnly)
+  {
+    desiredRoll = getDesiredRoll();
+    desiredPitch = getDesiredPitch();
+    desiredYaw = getDesiredYaw();
+  }
+
+  pitchController.setSetpoint(desiredPitch);
+  rollController.setSetpoint(desiredRoll);
+  yawController.setSetpoint(desiredYaw);
+
+  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %d; Roll: %d; Pitch: %d; Yaw: %d;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
+
   measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
   measuredEuler.toDegrees();
-
   measuredRoll = measuredEuler.y();
   measuredPitch = -measuredEuler.z();
   measuredYaw = measuredEuler.x();
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
-
-  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %d; Roll: %d; Pitch: %d; Yaw: %d;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
-
-  pitchController.setSetpoint(desiredPitch);
-  rollController.setSetpoint(desiredRoll);
-  yawController.setSetpoint(desiredYaw);
 
   pidPitchOutput = pitchController.calculate(measuredPitch);
   pidYawOutput = rollController.calculate(measuredYaw);
