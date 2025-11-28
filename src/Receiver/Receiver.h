@@ -31,7 +31,7 @@ float getDesiredPitch();
 /**
  * @brief Get the desired throttle rate
  *
- * @return int Microseconds
+ * @return Throttle rate
  */
 float getDesiredThrottle();
 
