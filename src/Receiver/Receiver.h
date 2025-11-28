@@ -17,27 +17,27 @@ void updateReceiver();
 /**
  * @brief Get the desired roll rate
  *
- * @return int Microseconds
+ * @return Angle in degrees
  */
-int getDesiredRoll();
+float getDesiredRoll();
 
 /**
  * @brief Get the desired pitch rate
  *
- * @return int Microseconds
+ * @return Angle in degrees
  */
-int getDesiredPitch();
+float getDesiredPitch();
 
 /**
  * @brief Get the desired throttle rate
  *
  * @return int Microseconds
  */
-int getDesiredThrottle();
+float getDesiredThrottle();
 
 /**
  * @brief Get the desired yaw rate
  *
- * @return int Microseconds
+ * @return Angle in degrees
  */
-int getDesiredYaw();
+float getDesiredYaw();

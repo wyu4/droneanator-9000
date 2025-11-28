@@ -24,22 +24,22 @@ void updateReceiver()
     IBus.loop();
 }
 
-int getDesiredRoll()
+float getDesiredRoll()
 {
     return (IBus.readChannel(ROLL_CHANNEL) - tiltOffset) * tiltMultiplier;
 }
 
-int getDesiredPitch()
+float getDesiredPitch()
 {
     return (IBus.readChannel(PITCH_CHANNEL) - tiltOffset) * tiltMultiplier;
 }
 
-int getDesiredThrottle()
+float getDesiredThrottle()
 {
     return min(IBus.readChannel(THROTTLE_CHANNEL), maxThrottle);
 }
 
-int getDesiredYaw()
+float getDesiredYaw()
 {
     return (IBus.readChannel(YAW_CHANNEL) - tiltOffset) * tiltMultiplier;
 }

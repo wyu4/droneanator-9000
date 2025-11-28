@@ -30,10 +30,10 @@ float pidYawOutput = 0;
 float pidRollOutput = 0;
 unsigned long lastTime = 0;
 
-int desiredThrottle = 0;
-int desiredRoll = 0;
-int desiredPitch = 0;
-int desiredYaw = 0;
+float desiredThrottle = 0;
+float desiredRoll = 0;
+float desiredPitch = 0;
+float desiredYaw = 0;
 
 imu::Vector<3> measuredEuler(0, 0, 0);
 float measuredRoll = 0;
@@ -98,8 +98,9 @@ void loop()
 {
   const unsigned long currentTime = millis();
   unsigned long deltaTime = currentTime - lastTime;
-  if (deltaTime == 0) {
-    deltaTime += 1;
+  if (deltaTime == 0)
+  {
+    deltaTime = 1;
   }
   lastTime = currentTime;
 
@@ -144,7 +145,7 @@ void loop()
   rollController.setSetpoint(desiredRoll);
   yawController.setSetpoint(desiredYaw);
 
-  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %d; Roll: %d; Pitch: %d; Yaw: %d;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
+  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
 
   measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
   measuredEuler.toDegrees();
@@ -160,10 +161,10 @@ void loop()
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
 
-  output1 = desiredThrottle - pidRollOutput - pidPitchOutput - pidYawOutput; // FR
-  output2 = desiredThrottle - pidRollOutput + pidPitchOutput + pidYawOutput; // BR
-  output3 = desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput; // BL
-  output4 = desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput; // FL
+  output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput - pidYawOutput); // FR
+  output2 = (int)round(desiredThrottle - pidRollOutput + pidPitchOutput + pidYawOutput); // BR
+  output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput); // BL
+  output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput); // FL
 
   Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
 
