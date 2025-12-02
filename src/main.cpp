@@ -22,9 +22,9 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(0.01, 0, 0);
-PID rollController(0.01, 0, 0);
-PID yawController(0.01, 0, 0);
+PID pitchController(0.001, 0, 0);
+PID rollController(0.001, 0, 0);
+PID yawController(0.001, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
@@ -118,7 +118,7 @@ void loop()
       return;
     }
 
-    if (desiredThrottle > CONTROLLER_MIN_RATE + 50)
+    if (desiredThrottle > CONTROLLER_MIN_RATE + 25)
     {
       println("Please set the throttle stick to the lowest position.");
       delay(500);
