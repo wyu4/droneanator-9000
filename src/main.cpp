@@ -13,18 +13,18 @@ const boolean hoverOnly = true;
   motor3 output = throttle + roll + pitch - yaw
   motor4 output = throttle + roll - pitch + yaw
 */
-MotorController motor1(41);  // Front right (clockwise)
-MotorController motor2(1);  // Back right (counter-clockwise)
-MotorController motor3(2); // Back left (clockwise)
-MotorController motor4(42); // Front left (counter-clockwise)
+MotorController motor1(2);  // Front right (clockwise)
+MotorController motor2(42);  // Back right (counter-clockwise)
+MotorController motor3(41); // Back left (clockwise)
+MotorController motor4(1); // Front left (counter-clockwise)
 int output1 = 0;
 int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(0.001, 0, 0);
-PID rollController(0.001, 0, 0);
-PID yawController(0.001, 0, 0);
+PID pitchController(0.7, 0, 0);
+PID rollController(0.7, 0, 0);
+PID yawController(0.7, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
@@ -52,6 +52,7 @@ inline void stop()
   motor2.stop();
   motor3.stop();
   motor4.stop();
+  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", 1000, 1000, 1000, 1000);
 }
 
 void setup()
@@ -172,7 +173,7 @@ void loop()
   motor2.set(output2);
   motor3.set(output3);
   motor4.set(output4);
-  delay(20);
+  //delay(20);
 }
 
 // IBusBM IBus; // Create an IBusBM object
