@@ -139,7 +139,7 @@ void loop()
   {
     desiredRoll = getDesiredRoll();
     desiredPitch = getDesiredPitch();
-    desiredYaw = getDesiredYaw();
+    desiredYaw += getDesiredYaw() * deltaTime;
   }
 
   pitchController.setSetpoint(desiredPitch);
@@ -173,6 +173,7 @@ void loop()
   motor2.set(output2);
   motor3.set(output3);
   motor4.set(output4);
+
   //delay(20);
 }
 
