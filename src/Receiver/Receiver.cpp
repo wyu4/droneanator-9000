@@ -6,6 +6,7 @@ const uint8_t ROLL_CHANNEL = 0;
 const uint8_t PITCH_CHANNEL = 1;
 const uint8_t THROTTLE_CHANNEL = 2;
 const uint8_t YAW_CHANNEL = 3;
+const uint8_t ARM_CHANNEL = 7;
 const float tiltMultiplier = 0.02;
 const int tiltOffset = 1500; // -500 to 500
 const uint16_t maxThrottle = 1600;
@@ -42,4 +43,9 @@ float getDesiredThrottle()
 float getDesiredYaw()
 {
     return (IBus.readChannel(YAW_CHANNEL) - tiltOffset) * tiltMultiplier;
+}
+
+int getDesiredArm()
+{
+   return IBus.readChannel(ARM_CHANNEL);
 }

@@ -41,3 +41,5 @@ float getDesiredThrottle();
  * @return Angle in degrees
  */
 float getDesiredYaw();
+
+int getDesiredArm();

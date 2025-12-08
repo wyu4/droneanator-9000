@@ -34,6 +34,7 @@ float desiredThrottle = 0;
 float desiredRoll = 0;
 float desiredPitch = 0;
 float desiredYaw = 0;
+int desiredArm = 0;
 
 imu::Vector<3> measuredEuler(0, 0, 0);
 float measuredRoll = 0;
@@ -52,7 +53,7 @@ inline void stop()
   motor2.stop();
   motor3.stop();
   motor4.stop();
-  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", 1000, 1000, 1000, 1000);
+  //Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", 1000, 1000, 1000, 1000);
 }
 
 void setup()
@@ -109,6 +110,7 @@ void loop()
   // updateLogger();
 
   desiredThrottle = getDesiredThrottle();
+  desiredArm = getDesiredArm();
 
   if (preventThrottle)
   {
@@ -167,12 +169,14 @@ void loop()
   output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput); // BL
   output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput); // FL
 
-  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
+  //Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
 
   motor1.set(output1);
   motor2.set(output2);
   motor3.set(output3);
   motor4.set(output4);
+
+  Serial.println(desiredArm);
 
   //delay(20);
 }
