@@ -137,6 +137,12 @@ void loop()
     return;
   }
 
+  if (desiredArm > CONTROLLER_MIN_RATE + 10)
+  {
+    stop();
+    return;
+  }
+
   if (!hoverOnly)
   {
     desiredRoll = getDesiredRoll();
@@ -159,7 +165,7 @@ void loop()
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
 
   pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
-  pidYawOutput = rollController.calculate(measuredYaw, deltaTime);
+  //pidYawOutput = rollController.calculate(measuredYaw, deltaTime);
   pidRollOutput = yawController.calculate(measuredRoll, deltaTime);
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
@@ -169,14 +175,14 @@ void loop()
   output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput); // BL
   output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput); // FL
 
-  //Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
+  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
 
   motor1.set(output1);
   motor2.set(output2);
   motor3.set(output3);
   motor4.set(output4);
 
-  Serial.println(desiredArm);
+  //Serial.println(desiredArm);
 
   //delay(20);
 }
