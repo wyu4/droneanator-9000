@@ -5,12 +5,6 @@ PID::PID(float p, float i, float d) : kP(p), kI(i), kD(d)
 {
 }
 
-void PID::setSetpoint(float setpoint)
-{
-    this->setpoint = setpoint;
-    this->reset();
-}
-
 void PID::reset()
 {
     this->errorSum = 0;

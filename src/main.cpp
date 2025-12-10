@@ -29,6 +29,7 @@ float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
 unsigned long lastTime = 0;
+unsigned long deltaTime = 1;
 
 float desiredThrottle = 0;
 float desiredRoll = 0;
@@ -82,14 +83,12 @@ void setup()
 
   println("Setting up motor controllers...");
 
-  pitchController.errorSumClamp = 1000;
-  rollController.errorSumClamp = 1000;
-  yawController.errorSumClamp = 1000;
+  pitchController.errorSumClamp = 400;
+  rollController.errorSumClamp = 400;
+  yawController.errorSumClamp = 400;
   pitchController.outputClamp = 60;
   rollController.outputClamp = 60;
   yawController.outputClamp = 60;
-
-  lastTime = millis();
 
   setupMotorControllers();
   stop();
@@ -98,11 +97,14 @@ void setup()
 
 void loop()
 {
-  const unsigned long currentTime = millis();
-  unsigned long deltaTime = currentTime - lastTime;
+  const unsigned long currentTime = micros();
+  deltaTime = currentTime - lastTime;
   if (deltaTime == 0)
-  {
     deltaTime = 1;
+  if (lastTime == 0)
+  { // If lastTime is invalid
+    lastTime = currentTime;
+    return;
   }
   lastTime = currentTime;
 
@@ -130,10 +132,22 @@ void loop()
     preventThrottle = false;
   }
 
+  measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
+  measuredEuler.toDegrees();
+  measuredRoll = measuredEuler.y();
+  measuredPitch = -measuredEuler.z();
+  measuredYaw = measuredEuler.x();
+
+  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
+
   // Make sure motors stop (ignoring PID controllers) when throttle is at a low state or arming is toggled off
   if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 10)
   {
     stop();
+    pitchController.reset();
+    rollController.reset();
+    yawController.reset();
+    desiredYaw = measuredYaw;
     return;
   }
 
@@ -144,19 +158,11 @@ void loop()
     desiredYaw += getDesiredYaw() * deltaTime;
   }
 
-  pitchController.setSetpoint(desiredPitch);
-  rollController.setSetpoint(desiredRoll);
-  yawController.setSetpoint(desiredYaw);
+  pitchController.setpoint = desiredPitch;
+  rollController.setpoint = desiredRoll;
+  yawController.setpoint = desiredYaw;
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
-
-  measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
-  measuredEuler.toDegrees();
-  measuredRoll = measuredEuler.y();
-  measuredPitch = -measuredEuler.z();
-  measuredYaw = measuredEuler.x();
-
-  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
 
   pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
   // pidYawOutput = rollController.calculate(measuredYaw, deltaTime);
@@ -180,31 +186,3 @@ void loop()
 
   // delay(20);
 }
-
-// IBusBM IBus; // Create an IBusBM object
-
-// void setup() {
-//   Serial.begin(115200);
-//   Serial.println("ESP32 IBus-BM Test Started");
-
-//   IBus.begin(Serial2, IBUSBM_NOTIMER); // disables the timer interrupt but you need to call loop() yourself
-// }
-
-// void loop() {
-//   // Call the IBus loop function to process incoming data, updates channel values
-//   IBus.loop();
-
-//   // Read and print channel values with no(?) delay
-//   Serial.print("Ch1: ");
-//   Serial.print(IBus.readChannel(0));
-//   Serial.print(" Ch2: ");
-//   Serial.print(IBus.readChannel(1));
-//   Serial.print(" Ch3: ");
-//   Serial.print(IBus.readChannel(2));
-//   Serial.print(" Ch4: ");
-//   Serial.print(IBus.readChannel(3));
-//   Serial.print(" Ch5: ");
-//   Serial.print(IBus.readChannel(4));
-//   Serial.print(" Ch6: ");
-//   Serial.println(IBus.readChannel(5));
-// }

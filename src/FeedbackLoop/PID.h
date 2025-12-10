@@ -25,13 +25,6 @@ public:
     PID(float p, float i, float d);
 
     /**
-     * @brief Safely resets the setpoint while adjusting the stored values.
-     *
-     * @param setpoint New setpoint
-     */
-    void setSetpoint(float setpoint);
-
-    /**
      * @brief Resets the PID controller's integral and derivative values.
      *
      */
