@@ -14,9 +14,9 @@ const boolean hoverOnly = true;
   motor4 output = throttle + roll - pitch + yaw
 */
 MotorController motor1(2);  // Front right (clockwise)
-MotorController motor2(42);  // Back right (counter-clockwise)
+MotorController motor2(42); // Back right (counter-clockwise)
 MotorController motor3(41); // Back left (clockwise)
-MotorController motor4(1); // Front left (counter-clockwise)
+MotorController motor4(1);  // Front left (counter-clockwise)
 int output1 = 0;
 int output2 = 0;
 int output3 = 0;
@@ -53,7 +53,7 @@ inline void stop()
   motor2.stop();
   motor3.stop();
   motor4.stop();
-  //Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", 1000, 1000, 1000, 1000);
+  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", 1000, 1000, 1000, 1000);
 }
 
 void setup()
@@ -130,14 +130,8 @@ void loop()
     preventThrottle = false;
   }
 
-  // Make sure motors stop (ignoring PID controllers) when throttle is at a low state
-  if (desiredThrottle < CONTROLLER_MIN_RATE + 50)
-  {
-    stop();
-    return;
-  }
-
-  if (desiredArm > CONTROLLER_MIN_RATE + 10)
+  // Make sure motors stop (ignoring PID controllers) when throttle is at a low state or arming is toggled off
+  if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 10)
   {
     stop();
     return;
@@ -165,7 +159,7 @@ void loop()
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
 
   pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
-  //pidYawOutput = rollController.calculate(measuredYaw, deltaTime);
+  // pidYawOutput = rollController.calculate(measuredYaw, deltaTime);
   pidRollOutput = yawController.calculate(measuredRoll, deltaTime);
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
@@ -182,9 +176,9 @@ void loop()
   motor3.set(output3);
   motor4.set(output4);
 
-  //Serial.println(desiredArm);
+  // Serial.println(desiredArm);
 
-  //delay(20);
+  // delay(20);
 }
 
 // IBusBM IBus; // Create an IBusBM object
