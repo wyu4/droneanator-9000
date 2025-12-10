@@ -28,8 +28,8 @@ PID yawController(0.7, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
-unsigned long lastTime = 0;
-unsigned long deltaTime = 1;
+unsigned long lastTime = 0; // Time since boot in microseconds
+unsigned long deltaTime = 1; // Time in microseconds
 
 float desiredThrottle = 0;
 float desiredRoll = 0;
