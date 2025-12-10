@@ -22,19 +22,19 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(0.7, 0, 0);
-PID rollController(0.7, 0, 0);
-PID yawController(0.7, 0, 0);
+PID pitchController(1, 1, 1);
+PID rollController(1, 1, 1);
+PID yawController(1, 1, 1);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
-unsigned long lastTime = 0; // Time since boot in microseconds
+unsigned long lastTime = 0;  // Time since boot in microseconds
 unsigned long deltaTime = 1; // Time in microseconds
 
 float desiredThrottle = 0;
 float desiredRoll = 0;
 float desiredPitch = 0;
-float desiredYaw = 0;
+double desiredYaw = 0;
 int desiredArm = 0;
 
 imu::Vector<3> measuredEuler(0, 0, 0);
@@ -54,6 +54,7 @@ inline void stop()
   motor2.stop();
   motor3.stop();
   motor4.stop();
+  // Serial.println("Stopped");
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", 1000, 1000, 1000, 1000);
 }
 
@@ -97,6 +98,8 @@ void setup()
 
 void loop()
 {
+  delay(20);
+
   const unsigned long currentTime = micros();
   deltaTime = currentTime - lastTime;
   if (deltaTime == 0)
@@ -119,14 +122,14 @@ void loop()
     if (desiredThrottle < CONTROLLER_MIN_RATE)
     {
       println("Waiting for valid throttle value.");
-      delay(500);
+      delay(250);
       return;
     }
 
     if (desiredThrottle > CONTROLLER_MIN_RATE + 25)
     {
       println("Please set the throttle stick to the lowest position.");
-      delay(500);
+      delay(250);
       return;
     }
     preventThrottle = false;
@@ -140,8 +143,21 @@ void loop()
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
 
+  if (!hoverOnly)
+  {
+    desiredRoll = getDesiredRoll();
+    desiredPitch = getDesiredPitch();
+    desiredYaw += (getDesiredYaw() * deltaTime * 0.00001);
+    while (desiredYaw > 180)
+      desiredYaw -= 360;
+    while (desiredYaw < -180)
+      desiredYaw += 360;
+  }
+
+  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
+
   // Make sure motors stop (ignoring PID controllers) when throttle is at a low state or arming is toggled off
-  if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 10)
+  if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 500)
   {
     stop();
     pitchController.reset();
@@ -151,21 +167,12 @@ void loop()
     return;
   }
 
-  if (!hoverOnly)
-  {
-    desiredRoll = getDesiredRoll();
-    desiredPitch = getDesiredPitch();
-    desiredYaw += getDesiredYaw() * deltaTime;
-  }
-
   pitchController.setpoint = desiredPitch;
   rollController.setpoint = desiredRoll;
   yawController.setpoint = desiredYaw;
 
-  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
-
   pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
-  // pidYawOutput = rollController.calculate(measuredYaw, deltaTime);
+  pidYawOutput = rollController.calculate(measuredYaw, deltaTime);
   pidRollOutput = yawController.calculate(measuredRoll, deltaTime);
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
@@ -175,7 +182,7 @@ void loop()
   output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput); // BL
   output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput); // FL
 
-  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
+  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
 
   motor1.set(output1);
   motor2.set(output2);
@@ -183,6 +190,4 @@ void loop()
   motor4.set(output4);
 
   // Serial.println(desiredArm);
-
-  // delay(20);
 }
