@@ -22,9 +22,9 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(1, 1, 1);
-PID rollController(1, 1, 1);
-PID yawController(1, 1, 1);
+PID pitchController(1, 0, 0);
+PID rollController(1, 0, 0);
+PID yawController(1, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
