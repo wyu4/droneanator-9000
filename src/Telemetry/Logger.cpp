@@ -46,13 +46,18 @@ void setupLogger()
     println("Serial port connected.");
 
     println("Starting WiFi...");
-    WiFi.softAP(SSID, PASSWORD);
-    printformat(">>> Hosting at [%s]", WiFi.softAPIP().toString());
-    delay(500);
-    println("Opening UDP...");
-    udp.begin(WIFI_PORT);
-    println("UDP opened.");
-    udpStarted = true;
+    if ((SSID != NULL) && (SSID[0] == '\0'))
+    {
+        WiFi.softAP(SSID, PASSWORD);
+        printformat(">>> Hosting at [%s]", WiFi.softAPIP().toString());
+        delay(500);
+        println("Opening UDP...");
+        udp.begin(WIFI_PORT);
+        println("UDP opened.");
+        udpStarted = true;
+        return;
+    }
+    println("Could not initialize WiFi due to empty SSID.");
 }
 
 void println(const char message[])
