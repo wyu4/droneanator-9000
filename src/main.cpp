@@ -5,7 +5,7 @@
 #include "Motor/MotorController.h"
 #include "FeedbackLoop/PID.h"
 
-const boolean hoverOnly = true;
+const boolean hoverOnly = false;
 
 /*
   motor1 output = throttle - roll - pitch - yaw
@@ -22,9 +22,9 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(1, 0, 0);
-PID rollController(1, 0, 0);
-PID yawController(1, 0, 0);
+PID pitchController(0.001, 0, 0);
+PID rollController(0.001, 0, 0);
+PID yawController(0.001, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
@@ -154,33 +154,35 @@ void loop()
       desiredYaw += 360;
   }
 
-  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
-
-  // Make sure motors stop (ignoring PID controllers) when throttle is at a low state or arming is toggled off
-  if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 500)
+  if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 10)
   {
     stop();
     pitchController.reset();
     rollController.reset();
     yawController.reset();
     desiredYaw = measuredYaw;
+    Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
     return;
   }
+
+  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
+
+  // Make sure motors stop (ignoring PID controllers) when throttle is at a low state or arming is toggled off
 
   pitchController.setpoint = desiredPitch;
   rollController.setpoint = desiredRoll;
   yawController.setpoint = desiredYaw;
 
   pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
-  pidYawOutput = rollController.calculate(measuredYaw, deltaTime);
-  pidRollOutput = yawController.calculate(measuredRoll, deltaTime);
+  pidYawOutput = yawController.calculate(measuredYaw, deltaTime);
+  pidRollOutput = rollController.calculate(measuredRoll, deltaTime);
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
 
-  output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput - pidYawOutput); // FR
-  output2 = (int)round(desiredThrottle - pidRollOutput + pidPitchOutput + pidYawOutput); // BR
-  output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput); // BL
-  output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput); // FL
+  output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput - pidYawOutput); // FR CW
+  output2 = (int)round(desiredThrottle - pidRollOutput + pidPitchOutput + pidYawOutput); // BR CCW
+  output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput); // BL CW
+  output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput); // FL CCW
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
 
