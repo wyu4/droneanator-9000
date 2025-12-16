@@ -49,5 +49,3 @@ void updateLogger();
  * @param enabled True if enabled, else False
  */
 void setPairingMode(const bool enabled);
-
-void writeUDPF(const char *format, ...);
