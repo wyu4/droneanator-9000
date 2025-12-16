@@ -29,9 +29,8 @@ void writeUDP(uint8_t *buffer, size_t size)
  *
  * @param data String data
  */
-inline void writeUDP(const char data[])
+void writeUDP(const char data[])
 {
-
     writeUDP((uint8_t *)data, strlen(data));
 }
 
@@ -103,4 +102,15 @@ void setPairingMode(const bool enabled)
     {
         println("Disabling pairing mode.");
     }
+}
+
+void writeUDPF(const char *format, ...)
+{
+    char buffer[256];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    writeUDP(buffer);
 }

@@ -22,9 +22,9 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(1.25, 0, 0);
-PID rollController(1.25, 0, 0);
-PID yawController(1.25, 0, 0);
+PID pitchController(1.5, 0, 0);
+PID rollController(1.5, 0, 0);
+PID yawController(1.5, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
@@ -34,13 +34,14 @@ unsigned long deltaTime = 1; // Time in microseconds
 float desiredThrottle = 0;
 float desiredRoll = 0;
 float desiredPitch = 0;
-double desiredYaw = 0;
+float desiredYawVelocity = 0;
 int desiredArm = 0;
 
+imu::Quaternion measuredQuaternion(1, 0, 0, 0);
 imu::Vector<3> measuredEuler(0, 0, 0);
 float measuredRoll = 0;
 float measuredPitch = 0;
-float measuredYaw = 0;
+float measuredYawVelocity = 0;
 
 bool preventThrottle = true;
 
@@ -87,9 +88,10 @@ void setup()
   pitchController.errorSumClamp = 400;
   rollController.errorSumClamp = 400;
   yawController.errorSumClamp = 400;
-  pitchController.outputClamp = 60;
-  rollController.outputClamp = 60;
-  yawController.outputClamp = 60;
+  pitchController.outputClamp = 120;
+  rollController.outputClamp = 120;
+  yawController.outputClamp = 120;
+  yawController.period = 360;
 
   setupMotorControllers();
   stop();
@@ -135,11 +137,12 @@ void loop()
     preventThrottle = false;
   }
 
-  measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
+  measuredQuaternion = getMeasuredQuaternionWithOffset();
+  measuredEuler = measuredQuaternion.toEuler();
   measuredEuler.toDegrees();
   measuredRoll = -measuredEuler.y();
   measuredPitch = measuredEuler.z();
-  measuredYaw = measuredEuler.x();
+  measuredYawVelocity = measuredQuaternion.toAngularVelocity(deltaTime / 1000000.0).x();
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
 
@@ -147,11 +150,7 @@ void loop()
   {
     desiredRoll = getDesiredRoll();
     desiredPitch = getDesiredPitch();
-    desiredYaw += (getDesiredYaw() * deltaTime * 0.00001);
-    while (desiredYaw > 180)
-      desiredYaw -= 360;
-    while (desiredYaw < -180)
-      desiredYaw += 360;
+    desiredYawVelocity = (getDesiredYaw() * deltaTime * 0.00001);
   }
 
   if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 10)
@@ -160,7 +159,7 @@ void loop()
     pitchController.reset();
     rollController.reset();
     yawController.reset();
-    desiredYaw = measuredYaw;
+    desiredYawVelocity = 0;
     // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
     return;
   }
@@ -171,15 +170,15 @@ void loop()
 
   pitchController.setpoint = desiredPitch;
   rollController.setpoint = desiredRoll;
-  yawController.setpoint = desiredYaw;
+  yawController.setpoint = desiredYawVelocity;
 
   pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
-  pidYawOutput = yawController.calculate(measuredYaw, deltaTime);
+  pidYawOutput += yawController.calculate(desiredYawVelocity, deltaTime);
   pidRollOutput = rollController.calculate(measuredRoll, deltaTime);
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
 
-  output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput - pidYawOutput); // FR CW
+  output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput - pidYawOutput + 20); // FR CW
   output2 = (int)round(desiredThrottle - pidRollOutput + pidPitchOutput + pidYawOutput); // BR CCW
   output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput); // BL CW
   output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput); // FL CCW
@@ -190,6 +189,8 @@ void loop()
   motor2.set(output2);
   motor3.set(output3);
   motor4.set(output4);
+  
+
 
   // Serial.println(desiredArm);
 }
