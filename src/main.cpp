@@ -24,7 +24,7 @@ int output4 = 0;
 
 PID pitchController(1.5, 0, 0);
 PID rollController(1.5, 0, 0);
-PID yawController(1.5, 0, 0);
+PID yawController(0.5, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
@@ -171,12 +171,12 @@ void loop()
   yawController.setpoint = desiredYawVelocity;
 
   pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
-  pidYawOutput += yawController.calculate(desiredYawVelocity, deltaTime);
+  pidYawOutput = yawController.calculate(measuredYawVelocity, deltaTime);
   pidRollOutput = rollController.calculate(measuredRoll, deltaTime);
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
 
-  output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput - pidYawOutput + 20); // FR CW
+  output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput - pidYawOutput); // FR CW
   output2 = (int)round(desiredThrottle - pidRollOutput + pidPitchOutput + pidYawOutput); // BR CCW
   output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput); // BL CW
   output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput); // FL CCW
