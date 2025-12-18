@@ -62,6 +62,13 @@ void getRawAxis(float *array)
     array[2] = event.orientation.z;
 }
 
+float getMeasuredYawVelocity() {
+    sensors_event_t event;
+    bno.getEvent(&event, Adafruit_BNO055::VECTOR_GYROSCOPE);
+
+    return event.gyro.x * (180.0F / 3.14159F);
+}
+
 void calibrateIMU()
 {
     offsetQuat = invertQuaternion(bno.getQuat());

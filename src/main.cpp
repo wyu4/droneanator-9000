@@ -91,7 +91,6 @@ void setup()
   pitchController.outputClamp = 120;
   rollController.outputClamp = 120;
   yawController.outputClamp = 120;
-  yawController.period = 360;
 
   setupMotorControllers();
   stop();
@@ -100,8 +99,6 @@ void setup()
 
 void loop()
 {
-  delay(20);
-
   const unsigned long currentTime = micros();
   deltaTime = currentTime - lastTime;
   if (deltaTime == 0)
@@ -121,6 +118,7 @@ void loop()
 
   if (preventThrottle)
   {
+    stop();
     if (desiredThrottle < CONTROLLER_MIN_RATE)
     {
       println("Waiting for valid throttle value.");
@@ -142,7 +140,7 @@ void loop()
   measuredEuler.toDegrees();
   measuredRoll = -measuredEuler.y();
   measuredPitch = measuredEuler.z();
-  measuredYawVelocity = measuredQuaternion.toAngularVelocity(deltaTime / 1000000.0).x();
+  measuredYawVelocity = getMeasuredYawVelocity();
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
 
@@ -190,7 +188,5 @@ void loop()
   motor3.set(output3);
   motor4.set(output4);
   
-
-
   // Serial.println(desiredArm);
 }

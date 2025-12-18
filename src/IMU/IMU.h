@@ -29,3 +29,10 @@ void calibrateIMU();
  * @return imu::Quaternion
  */
 imu::Quaternion getMeasuredQuaternionWithOffset();
+
+/**
+ * @brief Get the Measured Yaw Velocity in degrees per second
+ * 
+ * @return Deg/s
+ */
+float getMeasuredYawVelocity();
