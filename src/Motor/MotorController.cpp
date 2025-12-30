@@ -12,14 +12,14 @@ MotorController::MotorController(const uint8_t pin) : pin(pin)
     pinMode(pin, OUTPUT);
 }
 
-void MotorController::set(int value)
+void MotorController::set(const int value)
 {
-    int constrained = constrain(value, PWM_MIN, PWM_MAX);
+    int constrained = (value < PWM_MIN ? PWM_MIN : value) > PWM_MAX ? PWM_MAX : value;
     // Serial.println(constrained);
     analogWrite(this->pin, PWM_MULTIPLIER * constrained);
 }
 
 void MotorController::stop()
 {
-    this->set(1000);
+    this->set(0);
 }

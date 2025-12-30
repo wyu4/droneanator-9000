@@ -4,7 +4,7 @@ const uint32_t PWM_FREQUENCY = 250; // Hz
 const uint32_t PWM_RESOLUTION = 12; // Bits, meaning a min of 0, and max of 2^(whatever this variable is set to)
 const int PWM_MIN = 1000;              // Should be zero microseconds
 const int PWM_MAX = 2000;           // Maximum calibrated value
-const float PWM_MULTIPLIER = 1.024;
+const float PWM_MULTIPLIER = 1.024F;
 
 /**
  * @brief Initializes everything needed to communicate with motor controllers.

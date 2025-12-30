@@ -5,7 +5,7 @@
 #include "Motor/MotorController.h"
 #include "FeedbackLoop/PID.h"
 
-const boolean hoverOnly = false;
+const boolean hoverOnly = true;
 
 /*
   motor1 output = throttle - roll - pitch - yaw
@@ -13,8 +13,8 @@ const boolean hoverOnly = false;
   motor3 output = throttle + roll + pitch - yaw
   motor4 output = throttle + roll - pitch + yaw
 */
-MotorController motor1(41);  // Front right (clockwise)
-MotorController motor2(1); // Back right (counter-clockwise)
+MotorController motor1(41); // Front right (clockwise)
+MotorController motor2(1);  // Back right (counter-clockwise)
 MotorController motor3(42); // Back left (clockwise)
 MotorController motor4(2);  // Front left (counter-clockwise)
 int output1 = 0;
@@ -144,13 +144,6 @@ void loop()
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
 
-  if (!hoverOnly)
-  {
-    desiredRoll = getDesiredRoll();
-    desiredPitch = getDesiredPitch();
-    desiredYawVelocity = (getDesiredYaw() * deltaTime * 0.00001);
-  }
-
   if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 10)
   {
     stop();
@@ -160,6 +153,13 @@ void loop()
     desiredYawVelocity = 0;
     // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
     return;
+  }
+
+  if (!hoverOnly)
+  {
+    desiredRoll = getDesiredRoll();
+    desiredPitch = getDesiredPitch();
+    desiredYawVelocity = (getDesiredYaw() * deltaTime * 0.00001);
   }
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
@@ -187,6 +187,6 @@ void loop()
   motor2.set(output2);
   motor3.set(output3);
   motor4.set(output4);
-  
+
   // Serial.println(desiredArm);
 }
