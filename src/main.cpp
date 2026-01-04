@@ -7,12 +7,6 @@
 
 const boolean hoverOnly = false;
 
-/*
-  motor1 output = throttle - roll - pitch - yaw
-  motor2 output = throttle - roll + pitch + yaw
-  motor3 output = throttle + roll + pitch - yaw
-  motor4 output = throttle + roll - pitch + yaw
-*/
 MotorController motor1(41, 1);  // Front right (clockwise)
 MotorController motor2(1, 2); // Back right (counter-clockwise)
 MotorController motor3(42, 3); // Back left (clockwise)
@@ -24,7 +18,7 @@ int output4 = 0;
 
 PID pitchController(1.5, 0, 0);
 PID rollController(1.5, 0, 0);
-PID yawController(0.5, 0, 0);
+PID yawController(2, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
@@ -143,7 +137,7 @@ void loop()
   measuredPitch = measuredEuler.z();
   measuredYawVelocity = getMeasuredYawVelocity();
 
-  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYaw);
+  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYawVelocity);
 
   if (!hoverOnly)
   {
@@ -179,10 +173,10 @@ void loop()
 
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
 
-  output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput - pidYawOutput); // FR CW
-  output2 = (int)round(desiredThrottle - pidRollOutput + pidPitchOutput + pidYawOutput); // BR CCW
-  output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput - pidYawOutput); // BL CW
-  output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput + pidYawOutput); // FL CCW
+  output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput + pidYawOutput); // FR CW
+  output2 = (int)round(desiredThrottle - pidRollOutput + pidPitchOutput - pidYawOutput); // BR CCW
+  output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput + pidYawOutput); // BL CW
+  output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput - pidYawOutput); // FL CCW
 
   Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
 
@@ -190,6 +184,7 @@ void loop()
   motor2.set(output2);
   motor3.set(output3);
   motor4.set(output4);
+  // delay(20);
   
   // Serial.println(desiredArm);
 }

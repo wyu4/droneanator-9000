@@ -15,7 +15,7 @@ void MotorController::set(int value)
     int clamped = constrain(value, PWM_MIN, PWM_MAX);
     int output = ((clamped * MAX_DUTY) / PERIOD);
     ledcWrite(this->channel, output);
-    Serial.printf("Motor %d: value=%d duty=%d\n", channel, value, output);
+    // Serial.printf("Motor %d: value=%d duty=%d\n", channel, value, output);
     // Serial.printf("Max duty %d and period %duS\n", MAX_DUTY, PERIOD);
 }
 
