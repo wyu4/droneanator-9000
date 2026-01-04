@@ -13,10 +13,10 @@ const boolean hoverOnly = false;
   motor3 output = throttle + roll + pitch - yaw
   motor4 output = throttle + roll - pitch + yaw
 */
-MotorController motor1(41);  // Front right (clockwise)
-MotorController motor2(1); // Back right (counter-clockwise)
-MotorController motor3(42); // Back left (clockwise)
-MotorController motor4(2);  // Front left (counter-clockwise)
+MotorController motor1(41, 1);  // Front right (clockwise)
+MotorController motor2(1, 2); // Back right (counter-clockwise)
+MotorController motor3(42, 3); // Back left (clockwise)
+MotorController motor4(2, 4);  // Front left (counter-clockwise)
 int output1 = 0;
 int output2 = 0;
 int output3 = 0;
@@ -92,7 +92,6 @@ void setup()
   rollController.outputClamp = 120;
   yawController.outputClamp = 120;
 
-  setupMotorControllers();
   stop();
   println(">> Successfully set up motor controllers...");
 }
@@ -106,6 +105,7 @@ void loop()
   if (lastTime == 0)
   { // If lastTime is invalid
     lastTime = currentTime;
+    stop();
     return;
   }
   lastTime = currentTime;
@@ -126,7 +126,7 @@ void loop()
       return;
     }
 
-    if (desiredThrottle > CONTROLLER_MIN_RATE + 25)
+    if (desiredThrottle > CONTROLLER_MIN_RATE + 50)
     {
       println("Please set the throttle stick to the lowest position.");
       delay(250);
@@ -135,8 +135,7 @@ void loop()
     preventThrottle = false;
   }
 
-  measuredQuaternion = getMeasuredQuaternionWithOffset();
-  measuredEuler = measuredQuaternion.toEuler();
+  measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
   measuredEuler.toDegrees();
   measuredRoll = -measuredEuler.y();
   measuredPitch = measuredEuler.z();
@@ -148,7 +147,7 @@ void loop()
   {
     desiredRoll = getDesiredRoll();
     desiredPitch = getDesiredPitch();
-    desiredYawVelocity = (getDesiredYaw() * deltaTime * 0.00001);
+    desiredYawVelocity = getDesiredYaw();
   }
 
   if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 10)
@@ -157,12 +156,14 @@ void loop()
     pitchController.reset();
     rollController.reset();
     yawController.reset();
+    desiredRoll = 0;
+    desiredPitch = 0;
     desiredYawVelocity = 0;
-    // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
+    // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f; (stopped)\n", desiredThrottle, desiredRoll, desiredPitch, desiredYawVelocity);
     return;
   }
 
-  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYaw);
+  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYawVelocity);
 
   // Make sure motors stop (ignoring PID controllers) when throttle is at a low state or arming is toggled off
 

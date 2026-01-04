@@ -1,22 +1,15 @@
 #include "MotorController.h"
 
-void setupMotorControllers()
+MotorController::MotorController(const uint8_t pin, const uint8_t channel) : channel(channel)
 {
-    analogWriteFrequency(PWM_FREQUENCY);
-    analogWriteResolution(PWM_RESOLUTION);
-    delay(250);
-}
-
-MotorController::MotorController(const uint8_t pin) : pin(pin)
-{
-    pinMode(pin, OUTPUT);
+    ledcSetup(channel, 50, 12);
+    ledcAttachPin(pin, channel);
+    // pinMode(pin, OUTPUT);
 }
 
 void MotorController::set(int value)
 {
-    int constrained = constrain(value, PWM_MIN, PWM_MAX);
-    // Serial.println(constrained);
-    analogWrite(this->pin, PWM_MULTIPLIER * constrained);
+    ledcWrite(this->channel, map(value, 1000, 2000, 204, 409));
 }
 
 void MotorController::stop()
