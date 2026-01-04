@@ -15,7 +15,7 @@ IBusBM IBus;
 
 void setupReceiver()
 {
-    Serial2.begin(9600, SERIAL_8N1, 40, 41);
+    Serial2.begin(9600, SERIAL_8N1, 40, 45);
     delay(1000);
     IBus.begin(Serial2, IBUSBM_NOTIMER);
 }

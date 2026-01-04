@@ -61,6 +61,8 @@ inline void stop()
 
 void setup()
 {
+  // stop();
+
   setupLogger();
   setPairingMode(true);
 
@@ -91,8 +93,8 @@ void setup()
   pitchController.outputClamp = 120;
   rollController.outputClamp = 120;
   yawController.outputClamp = 120;
-
   stop();
+  delay(1000);
   println(">> Successfully set up motor controllers...");
 }
 
