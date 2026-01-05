@@ -5,10 +5,17 @@
 #include "Motor/MotorController.h"
 #include "FeedbackLoop/PID.h"
 
-const boolean hoverOnly = false;
+/**
+ * @brief Maps any numerical value to a range
+ *
+ */
+#define mapNumber(input, min, max, outMin, outMax) ((input - min) / (max - min) * (outMax - outMin) + outMin);
 
-MotorController motor1(41, 1);  // Front right (clockwise)
-MotorController motor2(1, 2); // Back right (counter-clockwise)
+const boolean hoverOnly = false;
+const float maxThrottle = 1400; // Microseconds
+
+MotorController motor1(41, 1); // Front right (clockwise)
+MotorController motor2(1, 2);  // Back right (counter-clockwise)
 MotorController motor3(42, 3); // Back left (clockwise)
 MotorController motor4(2, 4);  // Front left (counter-clockwise)
 int output1 = 0;
@@ -16,9 +23,9 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(1.5, 0, 0);
-PID rollController(1.5, 0, 0);
-PID yawController(2, 0, 0);
+PID pitchController(1, 0, 0);
+PID rollController(1, 0, 0);
+PID yawController(4, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
@@ -33,11 +40,13 @@ int desiredArm = 0;
 
 imu::Quaternion measuredQuaternion(1, 0, 0, 0);
 imu::Vector<3> measuredEuler(0, 0, 0);
+float rawReadings[] = {0, 0, 0};
 float measuredRoll = 0;
 float measuredPitch = 0;
 float measuredYawVelocity = 0;
 
 bool preventThrottle = true;
+bool disarmed = false;
 
 /**
  * @brief Stop all motors
@@ -86,7 +95,7 @@ void setup()
   yawController.errorSumClamp = 400;
   pitchController.outputClamp = 120;
   rollController.outputClamp = 120;
-  yawController.outputClamp = 120;
+  yawController.outputClamp = 200;
   stop();
   delay(1000);
   println(">> Successfully set up motor controllers...");
@@ -109,31 +118,52 @@ void loop()
   updateReceiver();
   // updateLogger();
 
-  desiredThrottle = getDesiredThrottle();
-  desiredArm = getDesiredArm();
+  if (readChannel(0) < CONTROLLER_MIN_RATE)
+  {
+    stop();
+    println("Waiting for valid controller value.");
+    delay(250);
+    return;
+  }
+
+  desiredThrottle = mapNumber(readChannel(THROTTLE_CHANNEL), 1000, 2000, 1000, maxThrottle);
+  desiredArm = readChannel(ARM_CHANNEL);
+
+  if (desiredArm > CONTROLLER_MIN_RATE + 10)
+  {
+    disarmed = true;
+    stop();
+    pitchController.reset();
+    rollController.reset();
+    yawController.reset();
+    return;
+  }
+
+  // This check makes it so that as soon as the drone is re-armed, the user will have to lower the throttle stick first before it does anything
+  if (disarmed == true)
+  {
+    disarmed = false;
+    preventThrottle = true;
+    return;
+  }
 
   if (preventThrottle)
   {
     stop();
-    if (desiredThrottle < CONTROLLER_MIN_RATE)
-    {
-      println("Waiting for valid throttle value.");
-      delay(250);
-      return;
-    }
-
     if (desiredThrottle > CONTROLLER_MIN_RATE + 50)
     {
       println("Please set the throttle stick to the lowest position.");
-      delay(250);
+      delay(100);
       return;
     }
     preventThrottle = false;
   }
 
+  getRawAxis(rawReadings);
+
   measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
   measuredEuler.toDegrees();
-  measuredRoll = -measuredEuler.y();
+  measuredRoll = measuredEuler.y();
   measuredPitch = measuredEuler.z();
   measuredYawVelocity = getMeasuredYawVelocity();
 
@@ -141,20 +171,17 @@ void loop()
 
   if (!hoverOnly)
   {
-    desiredRoll = getDesiredRoll();
-    desiredPitch = getDesiredPitch();
-    desiredYawVelocity = getDesiredYaw();
+    desiredRoll = mapNumber(readChannel(ROLL_CHANNEL), 1000, 2000, -10, 10);
+    desiredPitch = mapNumber(readChannel(PITCH_CHANNEL), 1000, 2000, -10, 10);
+    desiredYawVelocity = mapNumber(readChannel(YAW_CHANNEL), 1000, 2000, -10, 10);
   }
 
-  if (desiredThrottle < CONTROLLER_MIN_RATE + 50 || desiredArm > CONTROLLER_MIN_RATE + 10)
+  if (desiredThrottle < CONTROLLER_MIN_RATE + 50)
   {
     stop();
     pitchController.reset();
     rollController.reset();
     yawController.reset();
-    desiredRoll = 0;
-    desiredPitch = 0;
-    desiredYawVelocity = 0;
     // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f; (stopped)\n", desiredThrottle, desiredRoll, desiredPitch, desiredYawVelocity);
     return;
   }
@@ -178,13 +205,12 @@ void loop()
   output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput + pidYawOutput); // BL CW
   output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput - pidYawOutput); // FL CCW
 
-  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
+  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
 
   motor1.set(output1);
   motor2.set(output2);
   motor3.set(output3);
   motor4.set(output4);
-  // delay(20);
-  
+
   // Serial.println(desiredArm);
 }

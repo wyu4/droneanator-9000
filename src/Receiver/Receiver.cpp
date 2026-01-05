@@ -2,50 +2,25 @@
 #include <IBusBM.h>
 #include "Receiver.h"
 
-const uint8_t ROLL_CHANNEL = 0;
-const uint8_t PITCH_CHANNEL = 1;
-const uint8_t THROTTLE_CHANNEL = 2;
-const uint8_t YAW_CHANNEL = 3;
-const uint8_t ARM_CHANNEL = 4;
-const float tiltMultiplier = 0.02;
-const int tiltOffset = 1500; // -500 to 500
-const uint16_t maxThrottle = 1800;
+const uint8_t useableChannels = 5;
+float readings[] = {0, 0, 0, 0, 0};
 
 IBusBM IBus;
 
 void setupReceiver()
 {
-    Serial2.begin(9600, SERIAL_8N1, 40, 45);
+    IBus.begin(Serial2, IBUSBM_NOTIMER, 40, 45);
     delay(1000);
-    IBus.begin(Serial2, IBUSBM_NOTIMER);
 }
 
 void updateReceiver()
 {
     IBus.loop();
+    for (uint8_t i = 0; i < useableChannels; i++) {
+        readings[i] = (float) IBus.readChannel(i);
+    }
 }
 
-float getDesiredRoll()
-{
-    return (IBus.readChannel(ROLL_CHANNEL) - tiltOffset) * tiltMultiplier;
-}
-
-float getDesiredPitch()
-{
-    return (IBus.readChannel(PITCH_CHANNEL) - tiltOffset) * tiltMultiplier;
-}
-
-float getDesiredThrottle()
-{
-    return min(IBus.readChannel(THROTTLE_CHANNEL), maxThrottle);
-}
-
-float getDesiredYaw()
-{
-    return (IBus.readChannel(YAW_CHANNEL) - tiltOffset) * tiltMultiplier;
-}
-
-int getDesiredArm()
-{
-   return IBus.readChannel(ARM_CHANNEL);
+float readChannel(uint8_t channel) {
+    return readings[channel];
 }

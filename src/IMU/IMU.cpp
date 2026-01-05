@@ -8,6 +8,7 @@ uint8_t testResult = 0;
 uint8_t systemError = 0;
 
 imu::Quaternion offsetQuat(1, 0, 0, 0);
+imu::Vector<3> offsetEuler(0, 0, 0);
 
 /**
  * @brief Invert a Quaternion object
@@ -28,8 +29,6 @@ void readStatus()
 {
     bno.getSystemStatus(&systemStatus, &testResult, &systemError);
 }
-
-
 
 bool setupIMU()
 {
@@ -54,15 +53,19 @@ bool setupIMU()
 
 void getRawAxis(float *array)
 {
-    sensors_event_t event;
-    bno.getEvent(&event);
+    sensors_event_t real;
+    bno.getEvent(&real);
 
-    array[0] = event.orientation.x;
-    array[1] = event.orientation.y;
-    array[2] = event.orientation.z;
+    sensors_event_t vectors;
+    bno.getEvent(&vectors, Adafruit_BNO055::VECTOR_GYROSCOPE);
+
+    array[0] = vectors.gyro.x * (180.0F / 3.14159F);
+    array[1] = real.orientation.y + offsetEuler.y();
+    array[2] = real.orientation.z;
 }
 
-float getMeasuredYawVelocity() {
+float getMeasuredYawVelocity()
+{
     sensors_event_t event;
     bno.getEvent(&event, Adafruit_BNO055::VECTOR_GYROSCOPE);
 
@@ -71,7 +74,10 @@ float getMeasuredYawVelocity() {
 
 void calibrateIMU()
 {
-    offsetQuat = invertQuaternion(bno.getQuat());
+    imu::Quaternion quat = bno.getQuat();
+    offsetQuat = invertQuaternion(quat);
+    offsetEuler = quat.toEuler();
+    offsetEuler.toDegrees();
     Serial.printf("New offset: w[%.3f] x[%.3f] y[%.3f] z[%.3f]\n", offsetQuat.w(), offsetQuat.x(), offsetQuat.y(), offsetQuat.z());
 }
 

@@ -1,6 +1,10 @@
 const int CONTROLLER_MIN_RATE = 1000; // Minimum output rate of the controller (microseconds)
 const int CONTROLLER_MAX_RATE = 2000; // Maximium output rate of the controller (microseconds)
-const int CONTROLLER_MID_RATE = 1500; // (MAX_RATE + MIN_RATE) / 2
+const uint8_t ROLL_CHANNEL = 0;
+const uint8_t PITCH_CHANNEL = 1;
+const uint8_t THROTTLE_CHANNEL = 2;
+const uint8_t YAW_CHANNEL = 3;
+const uint8_t ARM_CHANNEL = 4;
 
 /**
  * @brief Initializes everything needed to receive data from the pilot.
@@ -15,31 +19,9 @@ void setupReceiver();
 void updateReceiver();
 
 /**
- * @brief Get the desired roll rate
- *
- * @return Angle in degrees
+ * @brief Read a receiver channel
+ * 
+ * @param channel
+ * @return Pulse-width (uS)
  */
-float getDesiredRoll();
-
-/**
- * @brief Get the desired pitch rate
- *
- * @return Angle in degrees
- */
-float getDesiredPitch();
-
-/**
- * @brief Get the desired throttle rate
- *
- * @return Throttle rate
- */
-float getDesiredThrottle();
-
-/**
- * @brief Get the desired yaw rate
- *
- * @return Angle in degrees
- */
-float getDesiredYaw();
-
-int getDesiredArm();
+float readChannel(uint8_t channel);

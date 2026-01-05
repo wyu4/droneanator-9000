@@ -11,7 +11,7 @@ bool setupIMU();
  * @brief Retrieve the BNO055's raw axis readings, stored into a float array
  * 
  * @param array Array to fill with X, Y, and Z values
- * @attention Index 0: X (yaw, 0 to +360)
+ * @attention Index 0: X (yaw, deg/s)
  * @attention Index 1: Y (roll, -90 to +90)
  * @attention Index 2: Z (pitch, -180 to +180)
  */
