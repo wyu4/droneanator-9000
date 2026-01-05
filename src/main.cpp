@@ -30,7 +30,9 @@ float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
 unsigned long lastTime = 0;  // Time since boot in microseconds
+unsigned long lastTimeTelemetry = 0; // Time since last telemetry send in microseconds
 unsigned long deltaTime = 1; // Time in microseconds
+const unsigned long telemetryRate = 100000; // Time between each telemetry send in microseconds
 
 float desiredThrottle = 0;
 float desiredRoll = 0;
@@ -62,6 +64,18 @@ inline void stop()
   // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", 1000, 1000, 1000, 1000);
 }
 
+/**
+ * @brief Send telemetry data over WiFi
+ * 
+ * @param currentTime Current time since boot
+ */
+void sendTelemetry(const unsigned long &currentTime)
+{
+  if ((currentTime - lastTimeTelemetry) < telemetryRate) return;
+  writeUDPF("$data %d %d %d %d %d %0.2f %0.2f %0.2f %lu %0.2f %0.2f %0.2f %0.2f %d %0.2f %0.2f %0.2f %d %d", output1, output2, output3, output4, hoverOnly, pidPitchOutput, pidRollOutput, pidYawOutput, deltaTime, desiredThrottle, desiredPitch, desiredRoll, desiredYawVelocity, desiredArm, measuredPitch, measuredRoll, measuredYawVelocity, preventThrottle, disarmed);
+  lastTimeTelemetry = currentTime;
+}
+
 void setup()
 {
   // stop();
@@ -69,26 +83,26 @@ void setup()
   setupLogger();
   setPairingMode(true);
 
-  println("Setting up receiver...");
+  Serial.println("Setting up receiver...");
   setupReceiver();
-  println(">>> Successfully set up receiver.");
+  Serial.println(">>> Successfully set up receiver.");
 
-  println("Setting up IMU...");
+  Serial.println("Setting up IMU...");
   if (!setupIMU())
   {
     while (true)
     {
-      println(">> Could not set up IMU. Please reboot.");
+      Serial.println(">> Could not set up IMU. Please reboot.");
       delay(1000);
     }
   }
   else
   {
-    println(">> Successfully set up IMU...");
+    Serial.println(">> Successfully set up IMU...");
     calibrateIMU();
   }
 
-  println("Setting up motor controllers...");
+  Serial.println("Setting up motor controllers...");
 
   pitchController.errorSumClamp = 400;
   rollController.errorSumClamp = 400;
@@ -98,7 +112,7 @@ void setup()
   yawController.outputClamp = 200;
   stop();
   delay(1000);
-  println(">> Successfully set up motor controllers...");
+  Serial.println(">> Successfully set up motor controllers...");
 }
 
 void loop()
@@ -116,18 +130,27 @@ void loop()
   lastTime = currentTime;
 
   updateReceiver();
-  // updateLogger();
+  updateLogger();
+
+  sendTelemetry(currentTime);
 
   if (readChannel(0) < CONTROLLER_MIN_RATE)
   {
     stop();
-    println("Waiting for valid controller value.");
-    delay(250);
+    Serial.println("Waiting for valid controller value.");
+    delay(100);
     return;
   }
 
   desiredThrottle = mapNumber(readChannel(THROTTLE_CHANNEL), 1000, 2000, 1000, maxThrottle);
   desiredArm = readChannel(ARM_CHANNEL);
+
+  if (!hoverOnly)
+  {
+    desiredRoll = mapNumber(readChannel(ROLL_CHANNEL), 1000, 2000, -10, 10);
+    desiredPitch = mapNumber(readChannel(PITCH_CHANNEL), 1000, 2000, -10, 10);
+    desiredYawVelocity = mapNumber(readChannel(YAW_CHANNEL), 1000, 2000, -10, 10);
+  }
 
   if (desiredArm > CONTROLLER_MIN_RATE + 10)
   {
@@ -152,7 +175,7 @@ void loop()
     stop();
     if (desiredThrottle > CONTROLLER_MIN_RATE + 50)
     {
-      println("Please set the throttle stick to the lowest position.");
+      Serial.println("Please set the throttle stick to the lowest position.");
       delay(100);
       return;
     }
@@ -167,14 +190,7 @@ void loop()
   measuredPitch = measuredEuler.z();
   measuredYawVelocity = getMeasuredYawVelocity();
 
-  Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYawVelocity);
-
-  if (!hoverOnly)
-  {
-    desiredRoll = mapNumber(readChannel(ROLL_CHANNEL), 1000, 2000, -10, 10);
-    desiredPitch = mapNumber(readChannel(PITCH_CHANNEL), 1000, 2000, -10, 10);
-    desiredYawVelocity = mapNumber(readChannel(YAW_CHANNEL), 1000, 2000, -10, 10);
-  }
+  // Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYawVelocity);
 
   if (desiredThrottle < CONTROLLER_MIN_RATE + 50)
   {

@@ -1,9 +1,13 @@
 #include <WiFi.h>
 #include "Logger.h"
 #include "Credentials.h"
+#include <esp_wifi.h>
+long lastPing = 0;       // Time of last ping in microseconds
+long pingRate = 2000000; // Time in between each ping
 
 WiFiUDP udp;
 IPAddress client(0, 0, 0, 0);
+uint16_t clientPort = 0;
 const uint16_t WIFI_PORT = 57476;
 
 bool udpStarted = false;
@@ -19,7 +23,7 @@ void writeUDP(uint8_t *buffer, size_t size)
 {
     if (!udpStarted)
         return;
-    udp.beginPacket(client, WIFI_PORT);
+    udp.beginPacket(client, clientPort);
     udp.write(buffer, size);
     udp.endPacket();
 }
@@ -45,9 +49,12 @@ void setupLogger()
     println("Serial port connected.");
 
     println("Starting WiFi...");
-    if ((SSID != NULL) && (SSID[0] == '\0'))
+    if ((SSID != NULL) && (SSID[0] != '\0'))
     {
+        esp_wifi_set_ps(WIFI_PS_NONE);
         WiFi.softAP(SSID, PASSWORD);
+        WiFi.setSleep(false);
+        WiFi;
         printformat(">>> Hosting at [%s]", WiFi.softAPIP().toString());
         delay(500);
         println("Opening UDP...");
@@ -72,7 +79,7 @@ void println(const String message)
 
 void printformat(const char *format, ...)
 {
-    char buffer[256];
+    char buffer[512];
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof(buffer), format, args);
@@ -84,10 +91,14 @@ void printformat(const char *format, ...)
 
 void updateLogger()
 {
-    if (pairing && udp.parsePacket())
+    if (udpStarted)
     {
-        client = udp.remoteIP();
-        printf("[heartbeat detected from %s]", client.toString());
+        if (pairing && udp.parsePacket())
+        {
+            client = udp.remoteIP();
+            clientPort = udp.remotePort();
+            Serial.printf("[heartbeat detected from %s]\n", client.toString());
+        }
     }
 }
 
@@ -106,11 +117,14 @@ void setPairingMode(const bool enabled)
 
 void writeUDPF(const char *format, ...)
 {
-    char buffer[256];
+    if (!udpStarted || client == IPAddress(0, 0, 0, 0))
+        return;
+    char buffer[512];
     va_list args;
     va_start(args, format);
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
+    Serial.printf("Free heap: %u\n", ESP.getFreeHeap());
     writeUDP(buffer);
 }
