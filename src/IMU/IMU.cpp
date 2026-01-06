@@ -59,7 +59,7 @@ void getRawAxis(float *array)
     sensors_event_t vectors;
     bno.getEvent(&vectors, Adafruit_BNO055::VECTOR_GYROSCOPE);
 
-    array[0] = vectors.gyro.x * (180.0F / 3.14159F);
+    array[0] = vectors.gyro.z * (180.0F / 3.14159F);
     array[1] = real.orientation.y + offsetEuler.y();
     array[2] = real.orientation.z;
 }
@@ -69,7 +69,7 @@ float getMeasuredYawVelocity()
     sensors_event_t event;
     bno.getEvent(&event, Adafruit_BNO055::VECTOR_GYROSCOPE);
 
-    return event.gyro.x * (180.0F / 3.14159F);
+    return event.gyro.z * (180.0F / 3.14159F);
 }
 
 void calibrateIMU()
