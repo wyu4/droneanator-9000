@@ -1,10 +1,12 @@
 import socket
-import threading
-import time
+from time import time
 
 DRONE_IP = "192.168.4.1"
 DRONE_PORT = 57476
 USER_PORT = 57476
+
+lastPing = -1000
+pingRate = 1 # seconds
 
 displayData:dict[str, str | dict[str, str]] = {
     "outputs": [
@@ -35,19 +37,12 @@ displayData:dict[str, str | dict[str, str]] = {
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(("0.0.0.0", USER_PORT))
-sock.connect((DRONE_IP, DRONE_PORT))
+sock.connect(("192.168.4.2", USER_PORT))
 sock.settimeout(0.1)
 
 def send_heartbeat():
     sock.sendto(b'heartbeat', (DRONE_IP, DRONE_PORT))
     # print(f'Heartbeat sent to {DRONE_IP}:{DRONE_PORT}')
-
-def heartbeat_loop():
-    while True:
-        send_heartbeat()
-        time.sleep(0.2)
-
-threading.Thread(target=heartbeat_loop, daemon=True).start()
 
 def parseData(raw:list[str]):
     displayData = {
@@ -80,6 +75,10 @@ def parseData(raw:list[str]):
 
 while True:
     try:
+        if (time() - lastPing > pingRate):
+            send_heartbeat()
+            lastPing = time()
+    
         data, address = sock.recvfrom(512)
         if not data:
             continue
