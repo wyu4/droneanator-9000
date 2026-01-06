@@ -37,7 +37,7 @@ displayData:dict[str, str | dict[str, str]] = {
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(("0.0.0.0", USER_PORT))
-sock.connect(("192.168.4.2", USER_PORT))
+sock.connect((DRONE_IP, USER_PORT))
 sock.settimeout(0.1)
 
 def send_heartbeat():
