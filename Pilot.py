@@ -1,8 +1,13 @@
 import socket
 import threading
+import queue
 from time import time
 from tkinter import *
 from tkinter import ttk
+import matplotlib
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.figure import Figure
+matplotlib.use("TkAgg")
 
 DRONE_IP = "192.168.4.1"
 DRONE_PORT = 57476
@@ -13,6 +18,7 @@ MAX_DISCONNECT = 3 # seconds
 
 root = Tk()
 status = StringVar(value="Disconnected")
+content = ttk.Frame(root, width=192, height=108, padding=10)
 
 parsed_data:dict[str, StringVar | dict[str, StringVar]] = {
     "outputs": [
@@ -41,15 +47,125 @@ parsed_data:dict[str, StringVar | dict[str, StringVar]] = {
     "disarmed": StringVar(value="0"),
     "timestamp": StringVar(value="0")
 }
+    
+class PIDGraph:
+    MAX_SIZE = 200
+    def __init__(self, master:Frame, name:str, y_label:str):
+        self.name = name
+        self.master = master
+        self.figure = Figure(figsize=(6, 4), dpi=100)
+        self.ax = self.figure.add_subplot(111)
+        self.ax.set_title(name)
+        self.ax.set_xlabel("Time (s)")
+        self.ax.set_ylabel(y_label)
+        self.measured, = self.ax.plot([], [], label="Measured", color="red")
+        self.setpoint, = self.ax.plot([], [], label="Setpoint", color="green")
+        self.ax.legend()
+        self.canvas = FigureCanvasTkAgg(self.figure, master=master)
+        self.canvas.get_tk_widget().pack(fill="both", expand=True)
+        self.queue = queue.Queue()
+        
+        self.time_data = []
+        self.measured_data = []
+        self.setpoint_data = []
+        self.queue_counter = 0
+        
+    def queue_data(self, measured:str, setpoint:str, time:str):
+        try:
+            self.queue.put_nowait((float(measured), float(setpoint), float(time)))
+            
+            if self.queue_counter + 1 > self.MAX_SIZE: # Cap the queue size, deleting old data
+                self.queue.get_nowait()
+            else:
+                self.queue_counter += 1
+        except queue.Full:
+            print(f'Graph "{self.name}"\'s queue is full.')
+        except TypeError as et:
+            print(f'Graph "{self.name}" could not convert raw data to float: {str(et)}')
+            return
+      
+    def update(self):
+        updated = False
+        
+        try:
+            while not self.queue.empty():
+                measured, setpoint, time = self.queue.get_nowait()
+                self.queue_counter -= 1
+                
+                if time <= self.time_data[len(self.time_data)-1]: # Delete data if graph restarts (moves back in time)
+                    self.measured_data.clear()
+                    self.setpoint_data.clear()
+                    self.time_data.clear()
+                
+                self.measured_data.append(measured)
+                self.setpoint_data.append(setpoint)
+                self.time_data.append(time)
+                
+                updated = True
+                
+                if len(self.time_data) > self.MAX_SIZE:
+                    self.measured_data.pop(0)
+                    self.setpoint_data.pop(0)
+                    self.time_data.pop(0)
+        except Exception as e:
+            print(f'Could not update graph "{self.name}": {str(e)}')
+        if updated:
+            self.measured.set_data(self.time_data, self.measured_data)
+            self.setpoint.set_data(self.time_data, self.setpoint_data)
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(("0.0.0.0", USER_PORT))
-sock.connect((DRONE_IP, USER_PORT))
-sock.settimeout(0.1)
+            self.ax.relim()
+            self.ax.autoscale_view()
+            
+            self.canvas.draw_idle()
+        
+graph_notebook = ttk.Notebook(content)
+        
+pitch_graph_frame = ttk.Frame(content)
+pitch_graph = PIDGraph(pitch_graph_frame, "Pitch", "Measured Pitch (deg)")
+
+roll_graph_frame = ttk.Frame(content)
+roll_graph = PIDGraph(roll_graph_frame, "Roll", "Measured Roll (deg)")
+
+yaw_graph_frame = ttk.Frame(content)
+yaw_graph = PIDGraph(yaw_graph_frame, "Yaw", "Measured Yaw (deg/s)")
+
+graph_notebook.add(pitch_graph_frame, text="Pitch")
+graph_notebook.add(roll_graph_frame, text="Roll")
+graph_notebook.add(yaw_graph_frame, text="Yaw")
+graph_notebook.add(ttk.Label(content, text="No graphs selected."), text="None")
+graph_notebook.select(3)
+
+def update_graphs():
+    opened = graph_notebook.index(graph_notebook.select())
+    if (opened == 0):
+        pitch_graph.update()
+        roll_graph.clear()
+        yaw_graph.clear()
+    elif (opened == 1):
+        roll_graph.update()
+        pitch_graph.clear()
+        yaw_graph.clear()
+    elif (opened == 2):
+        yaw_graph.update()
+        pitch_graph.clear()
+        roll_graph.clear()
+    root.after(100, update_graphs)
     
 def connection():
     last_ping = 0
     last_connect = 0
+    
+    success = False
+    while not success:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.bind(("0.0.0.0", USER_PORT))
+            sock.connect((DRONE_IP, USER_PORT))
+            sock.settimeout(0.1)
+            success = True
+        except Exception as e:
+            print(f"Could not start socket: {str(e)}")
+            success = False
         
     while True:
         now = time()
@@ -86,6 +202,9 @@ def connection():
                         parsed_data["preventThrottle"].set(data[17])
                         parsed_data["disarmed"].set(data[18])
                         parsed_data["timestamp"].set(f'{data[19]}s')
+                        pitch_graph.queue_data(data[14], data[10], data[19])
+                        roll_graph.queue_data(data[15], data[11], data[19])
+                        yaw_graph.queue_data(data[16], data[12], data[19])
         except socket.timeout:
             if (now - last_connect) > MAX_DISCONNECT:
                 status.set("Disconnected")
@@ -98,12 +217,10 @@ threading.Thread(target=connection, daemon=True).start()
         
 # GUI
 root.title("Droneanator Pilot")
-
-content = ttk.Frame(root, width=192, height=108, padding=10)
-desired_frame = ttk.Frame(content, padding=5)
-measured_frame = ttk.Frame(content, padding=5)
-pid_frame = ttk.Frame(content, padding=5)
-output_frame = ttk.Frame(content, padding=5)
+desired_frame = ttk.Frame(content, padding=20)
+measured_frame = ttk.Frame(content, padding=20)
+pid_frame = ttk.Frame(content, padding=20)
+output_frame = ttk.Frame(content, padding=20)
 footer_frame = ttk.Frame(content)
 hover_frame = ttk.Frame(footer_frame, padding=10)
 throttleoff_frame = ttk.Frame(footer_frame, padding=10)
@@ -117,15 +234,15 @@ for i in range(5):
     footer_frame.columnconfigure(i, weight=1)
 
 
-ttk.Label(content, anchor="center", textvariable=status, font=("Courier", 15, "bold")).grid(column=0, row=0, columnspan=4)
+ttk.Label(content, anchor="center", textvariable=status, font=("Courier", 15, "bold")).grid(column=0, row=0, columnspan=5)
 
 style = ttk.Style()
 style.configure(".", font=("Helvetica", 12))
 
 content.grid(column=0, row=0)
-
-desired_frame.grid(column=0, row=2)
-ttk.Label(content, text="Desired", anchor="center", font=("Helvetica", 13, "bold")).grid(column=0, row=1)
+graph_notebook.grid(column=0, row=2)
+desired_frame.grid(column=1, row=2, sticky="N")
+ttk.Label(desired_frame, text="Desired", anchor="center", font=("Helvetica", 13, "bold")).grid(column=0, row=0, columnspan=2)
 ttk.Label(desired_frame, text="Throttle:", anchor="e").grid(column=0, row=1)
 ttk.Label(desired_frame, text="Pitch:", anchor="e").grid(column=0, row=2)
 ttk.Label(desired_frame, text="Yaw:", anchor="e").grid(column=0, row=3)
@@ -137,8 +254,8 @@ ttk.Label(desired_frame, anchor="w", textvariable=parsed_data["desired"]["yaw"],
 ttk.Label(desired_frame, anchor="w", textvariable=parsed_data["desired"]["roll"], relief="sunken").grid(column=1, row=4)
 ttk.Label(desired_frame, anchor="w", textvariable=parsed_data["desired"]["arm"], relief="sunken").grid(column=1, row=5)
 
-measured_frame.grid(column=1, row=2)
-ttk.Label(content, text="Measured", anchor="center", font=("Helvetica", 13, "bold")).grid(column=1, row=1)
+measured_frame.grid(column=2, row=2, sticky="N")
+ttk.Label(measured_frame, text="Measured", anchor="center", font=("Helvetica", 13, "bold")).grid(column=0, row=0, columnspan=2)
 ttk.Label(measured_frame, text="Pitch:", anchor="e").grid(column=0, row=1)
 ttk.Label(measured_frame, text="Yaw:", anchor="e").grid(column=0, row=2)
 ttk.Label(measured_frame, text="Roll:", anchor="e").grid(column=0, row=3)
@@ -148,8 +265,8 @@ ttk.Label(measured_frame, anchor="w", textvariable=parsed_data["measured"]["roll
 ttk.Label(measured_frame).grid(column=0, row=4, columnspan=2)
 ttk.Label(measured_frame).grid(column=0, row=5, columnspan=2)
 
-pid_frame.grid(column=2, row=2)
-ttk.Label(content, text="PID", anchor="center", font=("Helvetica", 13, "bold")).grid(column=2, row=1)
+pid_frame.grid(column=3, row=2, sticky="N")
+ttk.Label(pid_frame, text="PID", anchor="center", font=("Helvetica", 13, "bold")).grid(column=0, row=0, columnspan=2)
 ttk.Label(pid_frame, text="Pitch:", anchor="e").grid(column=0, row=1)
 ttk.Label(pid_frame, text="Yaw:", anchor="e").grid(column=0, row=2)
 ttk.Label(pid_frame, text="Roll:", anchor="e").grid(column=0, row=3)
@@ -159,14 +276,16 @@ ttk.Label(pid_frame, anchor="w", textvariable=parsed_data["pidOutputs"]["roll"],
 ttk.Label(pid_frame).grid(column=0, row=4, columnspan=2)
 ttk.Label(pid_frame).grid(column=0, row=5, columnspan=2)
 
-output_frame.grid(column=3, row=2)
-ttk.Label(content, text="Motor Output", anchor="center", font=("Helvetica", 13, "bold")).grid(column=3, row=1)
-ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][3], relief="sunken").grid(column=1, row=0) # FL
-ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][0], relief="sunken").grid(column=2, row=0) # FR
-ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][2], relief="sunken").grid(column=1, row=1) # BL
-ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][1], relief="sunken").grid(column=2, row=1) # BR
+output_frame.grid(column=4, row=2, sticky="N")
+ttk.Label(output_frame, text="Motor Output", anchor="center", font=("Helvetica", 13, "bold")).grid(column=0, row=0, columnspan=2)
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][3], relief="sunken").grid(column=0, row=1) # FL
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][0], relief="sunken").grid(column=1, row=1) # FR
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][2], relief="sunken").grid(column=0, row=2) # BL
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][1], relief="sunken").grid(column=1, row=2) # BR
 
-footer_frame.grid(column=0, row=3, columnspan=4)
+
+
+footer_frame.grid(column=0, row=3, columnspan=5)
 hover_frame.grid(column=0)
 ttk.Label(hover_frame, text="Hover Mode", anchor="center", font=("Helvetica", 12, "bold")).grid(column=0, row=0)
 ttk.Label(hover_frame, anchor="center", textvariable=parsed_data["hoverOnly"], relief="sunken").grid(column=0, row=1)
@@ -183,4 +302,5 @@ timestamp_frame.grid(column=4, row=0)
 ttk.Label(timestamp_frame, text="Timestamp", anchor="center", font=("Helvetica", 12, "bold")).grid(column=0, row=0)
 ttk.Label(timestamp_frame, anchor="center", textvariable=parsed_data["timestamp"], relief="sunken").grid(column=0, row=1)
 
+update_graphs()
 root.mainloop()
