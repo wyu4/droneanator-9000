@@ -111,17 +111,6 @@ void printformat(const char *format, ...)
 	writeUDP(buffer);
 }
 
-void updateLogger()
-{
-	// if (udpStarted)
-	// {
-	// 	if (pairing && udp.parsePacket())
-	// 	{
-	// 		udp.read(dump, sizeof(dump));
-	// 	}
-	// }
-}
-
 void setPairingMode(const bool enabled)
 {
 	pairing = enabled;

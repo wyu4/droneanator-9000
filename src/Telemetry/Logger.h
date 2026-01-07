@@ -38,12 +38,6 @@ void printformat(const char *format, ...);
 void sendIMU(float imu[7]);
 
 /**
- * @brief Everything that should go in the flight controller's loop
- * 
- */
-void updateLogger();
-
-/**
  * @brief Enable/Disable the drone's ability to connect with a laptop
  * 
  * @param enabled True if enabled, else False

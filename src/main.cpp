@@ -45,7 +45,14 @@ imu::Vector<3> measuredEuler(0, 0, 0);
 float rawAxisReadings[] = {0, 0, 0};
 float measuredRoll = 0;
 float measuredPitch = 0;
-float measuredYawVelocity = 0;
+
+// Yaw velocity determined from an averaged circular buffer
+const int yawBufferSize = 100;
+float measuredYawVelocities[yawBufferSize];
+float sumYawVelocities = 0;
+float averageYawVelocities = 0;
+unsigned int yawBufferCounter = 0;
+unsigned int yawBufferIndex = 0;
 
 bool preventThrottle = true;
 bool disarmed = false;
@@ -56,6 +63,10 @@ bool disarmed = false;
  */
 inline void stop()
 {
+	output1 = 1000;
+	output2 = 1000;
+	output3 = 1000;
+	output4 = 1000;
 	motor1.stop();
 	motor2.stop();
 	motor3.stop();
@@ -73,7 +84,7 @@ void sendTelemetry(const unsigned long &currentTime)
 {
 	if ((currentTime - lastTimeTelemetry) < telemetryRate)
 		return;
-	writeUDPF("$data %d %d %d %d %d %0.2f %0.2f %0.2f %0.3f %0.2f %0.2f %0.2f %0.2f %d %0.2f %0.2f %0.2f %d %d %0.1f", output1, output2, output3, output4, hoverOnly, pidPitchOutput, pidRollOutput, pidYawOutput, (deltaTime / 1000.0F), desiredThrottle, desiredPitch, desiredRoll, desiredYawVelocity, desiredArm, measuredPitch, measuredRoll, measuredYawVelocity, preventThrottle, disarmed, (currentTime / 1000.0F));
+	writeUDPF("$data %d %d %d %d %d %0.2f %0.2f %0.2f %0.3f %0.2f %0.2f %0.2f %0.2f %d %0.2f %0.2f %0.2f %d %d %0.1f", output1, output2, output3, output4, hoverOnly, pidPitchOutput, pidRollOutput, pidYawOutput, (deltaTime / 1000.0F), desiredThrottle, desiredPitch, desiredRoll, desiredYawVelocity, desiredArm, measuredPitch, measuredRoll, averageYawVelocities, preventThrottle, disarmed, (currentTime / 1000.0F));
 	lastTimeTelemetry = currentTime;
 }
 
@@ -131,19 +142,27 @@ void loop()
 	lastTime = currentTime;
 
 	updateReceiver();
-	updateLogger();
 
 	getRawAxis(rawAxisReadings);
 
 	measuredRoll = rawAxisReadings[1];
 	measuredPitch = -rawAxisReadings[2];
-	measuredYawVelocity = rawAxisReadings[0];
 
-	// measuredEuler = getMeasuredQuaternionWithOffset().toEuler();
-	// measuredEuler.toDegrees();
-	// measuredRoll = -measuredEuler.y();
-	// measuredPitch = measuredEuler.z();
-	// measuredYawVelocity = getMeasuredYawVelocity();
+	// Handling average yaw velocities
+	sumYawVelocities -= measuredYawVelocities[yawBufferIndex];
+	measuredYawVelocities[yawBufferIndex] = rawAxisReadings[0];
+	sumYawVelocities += rawAxisReadings[0];
+	
+	yawBufferIndex = (yawBufferIndex + 1) % yawBufferSize; // Wrapping the selected index
+	
+	if (yawBufferCounter < yawBufferSize-1) // Making sure loop runs enough time to have enough data
+	{
+		yawBufferCounter += 1;
+		delay(10); // BNO055 outputs 100 samples/second
+		return;
+	};
+	
+	averageYawVelocities = sumYawVelocities / yawBufferSize;
 
 	sendTelemetry(currentTime);
 
@@ -195,19 +214,14 @@ void loop()
 		preventThrottle = false;
 	}
 
-	// Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", measuredRoll, measuredPitch, measuredYawVelocity);
-
 	if (desiredThrottle < CONTROLLER_MIN_RATE + 50)
 	{
 		stop();
 		pitchController.reset();
 		rollController.reset();
 		yawController.reset();
-		// Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f; (stopped)\n", desiredThrottle, desiredRoll, desiredPitch, desiredYawVelocity);
 		return;
 	}
-
-	// Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThrottle: %0.2f; Roll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", desiredThrottle, desiredRoll, desiredPitch, desiredYawVelocity);
 
 	// Make sure motors stop (ignoring PID controllers) when throttle is at a low state or arming is toggled off
 
@@ -216,22 +230,16 @@ void loop()
 	yawController.setpoint = desiredYawVelocity;
 
 	pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
-	pidYawOutput = yawController.calculate(measuredYawVelocity, deltaTime);
+	pidYawOutput = yawController.calculate(averageYawVelocities, deltaTime);
 	pidRollOutput = rollController.calculate(measuredRoll, deltaTime);
-
-	// Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nRoll: %0.2f; Pitch: %0.2f; Yaw: %0.2f;\n", pidRollOutput, pidPitchOutput, pidYawOutput);
 
 	output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput + pidYawOutput); // FR CW
 	output2 = (int)round(desiredThrottle - pidRollOutput + pidPitchOutput - pidYawOutput); // BR CCW
 	output3 = (int)round(desiredThrottle + pidRollOutput + pidPitchOutput + pidYawOutput); // BL CW
 	output4 = (int)round(desiredThrottle + pidRollOutput - pidPitchOutput - pidYawOutput); // FL CCW
 
-	// Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", output4, output1, output3, output2);
-
 	motor1.set(output1);
 	motor2.set(output2);
 	motor3.set(output3);
 	motor4.set(output4);
-
-	// Serial.println(desiredArm);
 }
