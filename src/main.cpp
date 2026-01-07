@@ -73,7 +73,7 @@ void sendTelemetry(const unsigned long &currentTime)
 {
 	if ((currentTime - lastTimeTelemetry) < telemetryRate)
 		return;
-	writeUDPF("$data %d %d %d %d %d %0.2f %0.2f %0.2f %lu %0.2f %0.2f %0.2f %0.2f %d %0.2f %0.2f %0.2f %d %d %0.2f", output1, output2, output3, output4, hoverOnly, pidPitchOutput, pidRollOutput, pidYawOutput, deltaTime, desiredThrottle, desiredPitch, desiredRoll, desiredYawVelocity, desiredArm, measuredPitch, measuredRoll, measuredYawVelocity, preventThrottle, disarmed, (currentTime / 1000.0));
+	writeUDPF("$data %d %d %d %d %d %0.2f %0.2f %0.2f %0.3f %0.2f %0.2f %0.2f %0.2f %d %0.2f %0.2f %0.2f %d %d %0.1f", output1, output2, output3, output4, hoverOnly, pidPitchOutput, pidRollOutput, pidYawOutput, (deltaTime / 1000.0F), desiredThrottle, desiredPitch, desiredRoll, desiredYawVelocity, desiredArm, measuredPitch, measuredRoll, measuredYawVelocity, preventThrottle, disarmed, (currentTime / 1000.0F));
 	lastTimeTelemetry = currentTime;
 }
 

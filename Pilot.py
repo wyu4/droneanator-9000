@@ -1,97 +1,157 @@
 import socket
+import threading
 from time import time
-import tkinter
+from tkinter import *
+from tkinter import ttk
 
 DRONE_IP = "192.168.4.1"
 DRONE_PORT = 57476
 USER_PORT = 57476
 
-lastPing = -1000
-pingRate = 1 # seconds
+PING_RATE = 1 # seconds
+MAX_UPDATE_RATE = 3 # seconds
 
-displayData:dict[str, str | dict[str, str]] = {
+root = Tk()
+status = StringVar(value="Disconnected")
+
+parsed_data:dict[str, StringVar | dict[str, StringVar]] = {
     "outputs": [
-        "0", "0", "0", "0"
+        StringVar(value="0000"), StringVar(value="0000"), StringVar(value="0000"), StringVar(value="0000")
     ],
-    "hoverOnly": "0",
+    "hoverOnly": StringVar(value="?"),
     "pidOutputs": {
-        "pitch": "0.0",
-        "roll": "0.0",
-        "yaw": "0.0"
+        "pitch": StringVar(value="0000"),
+        "roll": StringVar(value="0000"),
+        "yaw": StringVar(value="0000")
     },
-    "deltaTime": "0",
+    "deltaTime": StringVar(value="00000ms"),
     "desired": {
-        "throttle": "0.0",
-        "pitch": "0.0",
-        "roll": "0.0",
-        "yaw": "0.0",
-        "arm": "0"
+        "throttle": StringVar(value="0000"),
+        "pitch": StringVar(value="00"),
+        "roll": StringVar(value="00"),
+        "yaw": StringVar(value="00"),
+        "arm": StringVar(value="0000")
     },
     "measured": {
-        "pitch": "0.0",
-        "roll": "0.0",
-        "yaw": "0.0"
+        "pitch": StringVar(value="000"),
+        "roll": StringVar(value="000"),
+        "yaw": StringVar(value="00")
     },
-    "preventThrottle": "1",
-    "disarmed": "0"
+    "preventThrottle": StringVar(value="0"),
+    "disarmed": StringVar(value="0"),
+    "timestamp": StringVar(value="000000.0ms")
 }
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(("0.0.0.0", USER_PORT))
 sock.connect((DRONE_IP, USER_PORT))
 sock.settimeout(0.1)
-
-def send_heartbeat():
-    sock.sendto(b'heartbeat', (DRONE_IP, DRONE_PORT))
-    # print(f'Heartbeat sent to {DRONE_IP}:{DRONE_PORT}')
-
-def parseData(raw:list[str]):
-    displayData = {
-        "outputs": [
-            raw[0], raw[1], raw[2], raw[3]
-        ],
-        "hoverOnly": raw[4],
-        "pidOutputs": {
-            "pitch": raw[5],
-            "roll": raw[6],
-            "yaw": raw[7]
-        },
-        "deltaTime": f'{raw[8]}uS',
-        "desired": {
-            "throttle": raw[9],
-            "pitch": raw[10],
-            "roll": raw[11],
-            "yaw": raw[12],
-            "arm": raw[13]
-        },
-        "measured": {
-            "pitch": raw[14],
-            "roll": raw[15],
-            "yaw": raw[16]
-        },
-        "preventThrottle": raw[17],
-        "disarmed": raw[18],
-        "timestamp": raw[19]
-    }
-    print(str(displayData) + "\n\n\n\n\n\n\n\n")
-
-while True:
-    try:
-        if (time() - lastPing > pingRate):
-            send_heartbeat()
-            lastPing = time()
     
-        data, address = sock.recvfrom(512)
-        if not data:
-            continue
-        message = data.decode("utf-8")
-        if (message.startswith("$data")):
-            parseData(message.removeprefix("$data ").split(" "))
-            continue
-    except socket.timeout:
-        continue
-    except KeyboardInterrupt:
-            print("\nKeyboardInterrupt caught. Exiting gracefully.")
-            break
+def connection():
+    last_ping = 0
+    last_update = 0
         
-tkinter._test()
+    while True:
+        try:
+            now = time()
+            if (now - last_ping > PING_RATE):
+                sock.sendto(b'heartbeat', (DRONE_IP, DRONE_PORT))
+                last_ping = now
+        
+            raw, _ = sock.recvfrom(512)
+            if raw:
+                last_update = now
+                message = raw.decode("utf-8")
+                if (message.startswith("$data")):
+                    data = message.removeprefix("$data ").split(" ")
+                    if len(data) < 18: return
+                    parsed_data["outputs"][0].set(data[0])
+                    parsed_data["outputs"][1].set(data[1])
+                    parsed_data["outputs"][2].set(data[2])
+                    parsed_data["outputs"][3].set(data[3])
+                    parsed_data["hoverOnly"].set(data[4])
+                    parsed_data["pidOutputs"]["pitch"].set(data[5])
+                    parsed_data["pidOutputs"]["roll"].set(data[6])
+                    parsed_data["pidOutputs"]["yaw"].set(data[7])
+                    parsed_data["deltaTime"].set(f'{data[8]}ms')
+                    parsed_data["desired"]["throttle"].set(data[9])
+                    parsed_data["desired"]["pitch"].set(data[10])
+                    parsed_data["desired"]["roll"].set(data[11])
+                    parsed_data["desired"]["yaw"].set(data[12])
+                    parsed_data["desired"]["arm"].set(data[13])
+                    parsed_data["measured"]["pitch"].set(data[14])
+                    parsed_data["measured"]["roll"].set(data[15])
+                    parsed_data["measured"]["yaw"].set(data[16])
+                    parsed_data["preventThrottle"].set(data[17])
+                    parsed_data["disarmed"].set(data[18])
+                    parsed_data["timestamp"].set(f'{data[19]}ms')
+            if ((now - last_update) > MAX_UPDATE_RATE):
+                status.set("Disconnected")
+            else:
+                status.set("Connected")
+        except socket.timeout:
+            continue
+        except Exception as e:
+            print(f'An exception occurred in the connection loop: {str(e)}')
+
+# Silently run the connection code in the background
+threading.Thread(target=connection, daemon=True).start()
+        
+# GUI
+root.title("Droneanator Pilot")
+
+content = ttk.Frame(root, width=192, height=108, padding=10)
+desired_frame = ttk.Frame(content, padding=5)
+measured_frame = ttk.Frame(content, padding=5)
+pid_frame = ttk.Frame(content, padding=5)
+output_frame = ttk.Frame(content, padding=5)
+footer_frame = ttk.Frame(content)
+
+ttk.Label(content, anchor="center", textvariable=status, font=("Courier", 15, "bold")).grid(column=0, row=0, columnspan=4)
+
+style = ttk.Style()
+style.configure(".", font=("Helvetica", 12))
+
+content.grid(column=0, row=0)
+
+desired_frame.grid(column=0, row=2)
+ttk.Label(content, text="Desired", anchor="center", font=("Helvetica", 13, "bold")).grid(column=0, row=1)
+ttk.Label(desired_frame, text="Throttle:", anchor="e").grid(column=0, row=1)
+ttk.Label(desired_frame, text="Pitch:", anchor="e").grid(column=0, row=2)
+ttk.Label(desired_frame, text="Yaw:", anchor="e").grid(column=0, row=3)
+ttk.Label(desired_frame, text="Roll:", anchor="e").grid(column=0, row=4)
+ttk.Label(desired_frame, text="Arm:", anchor="e").grid(column=0, row=5)
+ttk.Label(desired_frame, anchor="w", textvariable=parsed_data["desired"]["throttle"], relief="sunken").grid(column=1, row=1)
+ttk.Label(desired_frame, anchor="w", textvariable=parsed_data["desired"]["pitch"], relief="sunken").grid(column=1, row=2)
+ttk.Label(desired_frame, anchor="w", textvariable=parsed_data["desired"]["yaw"], relief="sunken").grid(column=1, row=3)
+ttk.Label(desired_frame, anchor="w", textvariable=parsed_data["desired"]["roll"], relief="sunken").grid(column=1, row=4)
+ttk.Label(desired_frame, anchor="w", textvariable=parsed_data["desired"]["arm"], relief="sunken").grid(column=1, row=5)
+
+measured_frame.grid(column=1, row=2)
+ttk.Label(content, text="Measured", anchor="center", font=("Helvetica", 13, "bold")).grid(column=1, row=1)
+ttk.Label(measured_frame, text="Pitch:", anchor="e").grid(column=0, row=1)
+ttk.Label(measured_frame, text="Yaw:", anchor="e").grid(column=0, row=2)
+ttk.Label(measured_frame, text="Roll:", anchor="e").grid(column=0, row=3)
+ttk.Label(measured_frame, anchor="w", textvariable=parsed_data["measured"]["pitch"], relief="sunken").grid(column=1, row=1)
+ttk.Label(measured_frame, anchor="w", textvariable=parsed_data["measured"]["yaw"], relief="sunken").grid(column=1, row=2)
+ttk.Label(measured_frame, anchor="w", textvariable=parsed_data["measured"]["roll"], relief="sunken").grid(column=1, row=3)
+
+pid_frame.grid(column=2, row=2)
+ttk.Label(content, text="PID", anchor="center", font=("Helvetica", 13, "bold")).grid(column=2, row=1)
+ttk.Label(pid_frame, text="Pitch:", anchor="e").grid(column=0, row=1)
+ttk.Label(pid_frame, text="Yaw:", anchor="e").grid(column=0, row=2)
+ttk.Label(pid_frame, text="Roll:", anchor="e").grid(column=0, row=3)
+ttk.Label(pid_frame, anchor="w", textvariable=parsed_data["pidOutputs"]["pitch"], relief="sunken").grid(column=1, row=1)
+ttk.Label(pid_frame, anchor="w", textvariable=parsed_data["pidOutputs"]["yaw"], relief="sunken").grid(column=1, row=2)
+ttk.Label(pid_frame, anchor="w", textvariable=parsed_data["pidOutputs"]["roll"], relief="sunken").grid(column=1, row=3)
+
+output_frame.grid(column=3, row=2)
+ttk.Label(content, text="Motor Output", anchor="center", font=("Helvetica", 13, "bold")).grid(column=3, row=1)
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][3], relief="sunken").grid(column=1, row=0) #FL
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][0], relief="sunken").grid(column=1, row=1) #FR
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][2], relief="sunken").grid(column=2, row=0) #BL
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][1], relief="sunken").grid(column=2, row=1) #BR
+
+footer_frame.grid(column=0, row=3)
+
+root.mainloop()

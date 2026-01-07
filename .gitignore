@@ -6,3 +6,6 @@
 *.ino.cpp
 Credentials.h
 .venv
+build
+dist
+Pilot.spec
