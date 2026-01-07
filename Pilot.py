@@ -1,5 +1,6 @@
 import socket
 from time import time
+import tkinter
 
 DRONE_IP = "192.168.4.1"
 DRONE_PORT = 57476
@@ -69,7 +70,8 @@ def parseData(raw:list[str]):
             "yaw": raw[16]
         },
         "preventThrottle": raw[17],
-        "disarmed": raw[18]
+        "disarmed": raw[18],
+        "timestamp": raw[19]
     }
     print(str(displayData) + "\n\n\n\n\n\n\n\n")
 
@@ -91,3 +93,5 @@ while True:
     except KeyboardInterrupt:
             print("\nKeyboardInterrupt caught. Exiting gracefully.")
             break
+        
+tkinter._test()

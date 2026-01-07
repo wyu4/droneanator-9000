@@ -60,7 +60,7 @@ void getRawAxis(float *array)
     bno.getEvent(&vectors, Adafruit_BNO055::VECTOR_GYROSCOPE);
 
     array[0] = vectors.gyro.z * (180.0F / 3.14159F);
-    array[1] = real.orientation.y + offsetEuler.y();
+    array[1] = real.orientation.y; //+ offsetEuler.y();
     array[2] = real.orientation.z;
 }
 
