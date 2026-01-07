@@ -39,7 +39,7 @@ parsed_data:dict[str, StringVar | dict[str, StringVar]] = {
     },
     "preventThrottle": StringVar(value="0"),
     "disarmed": StringVar(value="0"),
-    "timestamp": StringVar(value="0ms")
+    "timestamp": StringVar(value="0")
 }
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -85,7 +85,7 @@ def connection():
                         parsed_data["measured"]["yaw"].set(data[16])
                         parsed_data["preventThrottle"].set(data[17])
                         parsed_data["disarmed"].set(data[18])
-                        parsed_data["timestamp"].set(f'{data[19]}ms')
+                        parsed_data["timestamp"].set(f'{data[19]}s')
         except socket.timeout:
             if (now - last_connect) > MAX_DISCONNECT:
                 status.set("Disconnected")
@@ -105,6 +105,17 @@ measured_frame = ttk.Frame(content, padding=5)
 pid_frame = ttk.Frame(content, padding=5)
 output_frame = ttk.Frame(content, padding=5)
 footer_frame = ttk.Frame(content)
+hover_frame = ttk.Frame(footer_frame, padding=10)
+throttleoff_frame = ttk.Frame(footer_frame, padding=10)
+disarm_frame = ttk.Frame(footer_frame, padding=10)
+deltatime_frame = ttk.Frame(footer_frame, padding=10)
+timestamp_frame = ttk.Frame(footer_frame, padding=10)
+
+for i in range(4):
+    content.columnconfigure(i, weight=1)
+for i in range(5):
+    footer_frame.columnconfigure(i, weight=1)
+
 
 ttk.Label(content, anchor="center", textvariable=status, font=("Courier", 15, "bold")).grid(column=0, row=0, columnspan=4)
 
@@ -134,6 +145,8 @@ ttk.Label(measured_frame, text="Roll:", anchor="e").grid(column=0, row=3)
 ttk.Label(measured_frame, anchor="w", textvariable=parsed_data["measured"]["pitch"], relief="sunken").grid(column=1, row=1)
 ttk.Label(measured_frame, anchor="w", textvariable=parsed_data["measured"]["yaw"], relief="sunken").grid(column=1, row=2)
 ttk.Label(measured_frame, anchor="w", textvariable=parsed_data["measured"]["roll"], relief="sunken").grid(column=1, row=3)
+ttk.Label(measured_frame).grid(column=0, row=4, columnspan=2)
+ttk.Label(measured_frame).grid(column=0, row=5, columnspan=2)
 
 pid_frame.grid(column=2, row=2)
 ttk.Label(content, text="PID", anchor="center", font=("Helvetica", 13, "bold")).grid(column=2, row=1)
@@ -143,14 +156,31 @@ ttk.Label(pid_frame, text="Roll:", anchor="e").grid(column=0, row=3)
 ttk.Label(pid_frame, anchor="w", textvariable=parsed_data["pidOutputs"]["pitch"], relief="sunken").grid(column=1, row=1)
 ttk.Label(pid_frame, anchor="w", textvariable=parsed_data["pidOutputs"]["yaw"], relief="sunken").grid(column=1, row=2)
 ttk.Label(pid_frame, anchor="w", textvariable=parsed_data["pidOutputs"]["roll"], relief="sunken").grid(column=1, row=3)
+ttk.Label(pid_frame).grid(column=0, row=4, columnspan=2)
+ttk.Label(pid_frame).grid(column=0, row=5, columnspan=2)
 
 output_frame.grid(column=3, row=2)
 ttk.Label(content, text="Motor Output", anchor="center", font=("Helvetica", 13, "bold")).grid(column=3, row=1)
-ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][3], relief="sunken").grid(column=1, row=0) #FL
-ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][0], relief="sunken").grid(column=1, row=1) #FR
-ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][2], relief="sunken").grid(column=2, row=0) #BL
-ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][1], relief="sunken").grid(column=2, row=1) #BR
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][3], relief="sunken").grid(column=1, row=0) # FL
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][0], relief="sunken").grid(column=2, row=0) # FR
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][2], relief="sunken").grid(column=1, row=1) # BL
+ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][1], relief="sunken").grid(column=2, row=1) # BR
 
-footer_frame.grid(column=0, row=3)
+footer_frame.grid(column=0, row=3, columnspan=4)
+hover_frame.grid(column=0)
+ttk.Label(hover_frame, text="Hover Mode", anchor="center", font=("Helvetica", 12, "bold")).grid(column=0, row=0)
+ttk.Label(hover_frame, anchor="center", textvariable=parsed_data["hoverOnly"], relief="sunken").grid(column=0, row=1)
+throttleoff_frame.grid(column=1, row=0)
+ttk.Label(throttleoff_frame, text="Throttle Off", anchor="center", font=("Helvetica", 12, "bold")).grid(column=0, row=0)
+ttk.Label(throttleoff_frame, anchor="center", textvariable=parsed_data["preventThrottle"], relief="sunken").grid(column=0, row=1)
+disarm_frame.grid(column=2, row=0)
+ttk.Label(disarm_frame, text="Disarmed", anchor="center", font=("Helvetica", 12, "bold")).grid(column=0, row=0)
+ttk.Label(disarm_frame, anchor="center", textvariable=parsed_data["disarmed"], relief="sunken").grid(column=0, row=1)
+deltatime_frame.grid(column=3, row=0)
+ttk.Label(deltatime_frame, text="ΔTime", anchor="center", font=("Helvetica", 12, "bold")).grid(column=0, row=0)
+ttk.Label(deltatime_frame, anchor="center", textvariable=parsed_data["deltaTime"], relief="sunken").grid(column=0, row=1)
+timestamp_frame.grid(column=4, row=0)
+ttk.Label(timestamp_frame, text="Timestamp", anchor="center", font=("Helvetica", 12, "bold")).grid(column=0, row=0)
+ttk.Label(timestamp_frame, anchor="center", textvariable=parsed_data["timestamp"], relief="sunken").grid(column=0, row=1)
 
 root.mainloop()

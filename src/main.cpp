@@ -32,7 +32,7 @@ float pidRollOutput = 0;
 unsigned long lastTime = 0;					// Time since boot in microseconds
 unsigned long lastTimeTelemetry = 0;		// Time since last telemetry send in microseconds
 unsigned long deltaTime = 1;				// Time in microseconds
-const unsigned long telemetryRate = 100000; // Time between each telemetry send in microseconds
+const unsigned long telemetryRate = 50000; // Time between each telemetry send in microseconds
 
 float desiredThrottle = 0;
 float desiredRoll = 0;
@@ -47,7 +47,7 @@ float measuredRoll = 0;
 float measuredPitch = 0;
 
 // Yaw velocity determined from an averaged circular buffer
-const int yawBufferSize = 100;
+const int yawBufferSize = 40;
 float measuredYawVelocities[yawBufferSize];
 float sumYawVelocities = 0;
 float averageYawVelocities = 0;
@@ -61,18 +61,22 @@ bool disarmed = false;
  * @brief Stop all motors
  *
  */
-inline void stop()
+void stop()
 {
-	output1 = 1000;
-	output2 = 1000;
-	output3 = 1000;
-	output4 = 1000;
 	motor1.stop();
 	motor2.stop();
 	motor3.stop();
 	motor4.stop();
-	// Serial.println("Stopped");
-	// Serial.printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFL: %d\tFR: %d\nBL: %d\tBR: %d\n", 1000, 1000, 1000, 1000);
+	pitchController.reset();
+	rollController.reset();
+	yawController.reset();
+	output1 = 1000;
+	output2 = 1000;
+	output3 = 1000;
+	output4 = 1000;
+	pidPitchOutput = 0;
+	pidYawOutput = 0;
+	pidRollOutput = 0;
 }
 
 /**
@@ -84,13 +88,13 @@ void sendTelemetry(const unsigned long &currentTime)
 {
 	if ((currentTime - lastTimeTelemetry) < telemetryRate)
 		return;
-	writeUDPF("$data %d %d %d %d %d %0.2f %0.2f %0.2f %0.3f %0.2f %0.2f %0.2f %0.2f %d %0.2f %0.2f %0.2f %d %d %0.1f", output1, output2, output3, output4, hoverOnly, pidPitchOutput, pidRollOutput, pidYawOutput, (deltaTime / 1000.0F), desiredThrottle, desiredPitch, desiredRoll, desiredYawVelocity, desiredArm, measuredPitch, measuredRoll, averageYawVelocities, preventThrottle, disarmed, (currentTime / 1000.0F));
+	writeUDPF("$data %d %d %d %d %d %0.2f %0.2f %0.2f %0.3f %0.2f %0.2f %0.2f %0.2f %d %0.2f %0.2f %0.2f %d %d %0.2f", output1, output2, output3, output4, hoverOnly, pidPitchOutput, pidRollOutput, pidYawOutput, (deltaTime / 1000.0F), desiredThrottle, desiredPitch, desiredRoll, desiredYawVelocity, desiredArm, measuredPitch, measuredRoll, averageYawVelocities, preventThrottle, disarmed, (currentTime / 1000000.0F));
 	lastTimeTelemetry = currentTime;
 }
 
 void setup()
 {
-	// stop();
+	stop();
 
 	setupLogger();
 	setPairingMode(true);
@@ -122,7 +126,7 @@ void setup()
 	pitchController.outputClamp = 300;
 	rollController.outputClamp = 300;
 	yawController.outputClamp = 300;
-	stop();
+
 	delay(1000);
 	Serial.println(">> Successfully set up motor controllers...");
 }
@@ -152,16 +156,16 @@ void loop()
 	sumYawVelocities -= measuredYawVelocities[yawBufferIndex];
 	measuredYawVelocities[yawBufferIndex] = rawAxisReadings[0];
 	sumYawVelocities += rawAxisReadings[0];
-	
+
 	yawBufferIndex = (yawBufferIndex + 1) % yawBufferSize; // Wrapping the selected index
-	
-	if (yawBufferCounter < yawBufferSize-1) // Making sure loop runs enough time to have enough data
+
+	if (yawBufferCounter < yawBufferSize - 1) // Making sure loop runs enough time to have enough data
 	{
 		yawBufferCounter += 1;
 		delay(10); // BNO055 outputs 100 samples/second
 		return;
 	};
-	
+
 	averageYawVelocities = sumYawVelocities / yawBufferSize;
 
 	sendTelemetry(currentTime);
@@ -188,9 +192,6 @@ void loop()
 	{
 		disarmed = true;
 		stop();
-		pitchController.reset();
-		rollController.reset();
-		yawController.reset();
 		return;
 	}
 
@@ -208,7 +209,6 @@ void loop()
 		if (desiredThrottle > CONTROLLER_MIN_RATE + 50)
 		{
 			Serial.println("Please set the throttle stick to the lowest position.");
-			delay(100);
 			return;
 		}
 		preventThrottle = false;
@@ -217,9 +217,6 @@ void loop()
 	if (desiredThrottle < CONTROLLER_MIN_RATE + 50)
 	{
 		stop();
-		pitchController.reset();
-		rollController.reset();
-		yawController.reset();
 		return;
 	}
 
