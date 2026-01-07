@@ -12,7 +12,7 @@
 #define mapNumber(input, min, max, outMin, outMax) ((input - min) / (max - min) * (outMax - outMin) + outMin);
 
 const boolean hoverOnly = false;
-const float maxThrottle = 1550; // Microseconds
+const float maxThrottle = 1800; // Microseconds
 
 MotorController motor1(41, 1); // Front right (clockwise)
 MotorController motor2(1, 2);  // Back right (counter-clockwise)
@@ -23,9 +23,11 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(15, 0, 0);
-PID rollController(15, 0, 0);
-PID yawController(9, 0, 0);
+PID pitchController(7, 0, 0);
+PID rollController(7, 0, 0);
+PID yawController(0, 0, 0);
+// PID rollController(15, 0, 0);
+// PID yawController(9, 0, 0);
 float pidPitchOutput = 0;
 float pidYawOutput = 0;
 float pidRollOutput = 0;
@@ -122,10 +124,7 @@ void setup()
 
 	pitchController.errorSumClamp = 400;
 	rollController.errorSumClamp = 400;
-	yawController.errorSumClamp = 400;
-	pitchController.outputClamp = 300;
-	rollController.outputClamp = 300;
-	yawController.outputClamp = 300;
+	yawController.errorSumClamp = 400;          
 
 	delay(1000);
 	Serial.println(">> Successfully set up motor controllers...");
