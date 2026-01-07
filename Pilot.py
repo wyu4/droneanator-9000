@@ -9,37 +9,37 @@ DRONE_PORT = 57476
 USER_PORT = 57476
 
 PING_RATE = 1 # seconds
-MAX_UPDATE_RATE = 3 # seconds
+MAX_DISCONNECT = 3 # seconds
 
 root = Tk()
 status = StringVar(value="Disconnected")
 
 parsed_data:dict[str, StringVar | dict[str, StringVar]] = {
     "outputs": [
-        StringVar(value="0000"), StringVar(value="0000"), StringVar(value="0000"), StringVar(value="0000")
+        StringVar(value="0"), StringVar(value="0"), StringVar(value="0"), StringVar(value="0")
     ],
-    "hoverOnly": StringVar(value="?"),
+    "hoverOnly": StringVar(value="0"),
     "pidOutputs": {
-        "pitch": StringVar(value="0000"),
-        "roll": StringVar(value="0000"),
-        "yaw": StringVar(value="0000")
+        "pitch": StringVar(value="0"),
+        "roll": StringVar(value="0"),
+        "yaw": StringVar(value="0")
     },
-    "deltaTime": StringVar(value="00000ms"),
+    "deltaTime": StringVar(value="0"),
     "desired": {
-        "throttle": StringVar(value="0000"),
-        "pitch": StringVar(value="00"),
-        "roll": StringVar(value="00"),
-        "yaw": StringVar(value="00"),
-        "arm": StringVar(value="0000")
+        "throttle": StringVar(value="0"),
+        "pitch": StringVar(value="0"),
+        "roll": StringVar(value="0"),
+        "yaw": StringVar(value="0"),
+        "arm": StringVar(value="0")
     },
     "measured": {
-        "pitch": StringVar(value="000"),
-        "roll": StringVar(value="000"),
-        "yaw": StringVar(value="00")
+        "pitch": StringVar(value="0"),
+        "roll": StringVar(value="0"),
+        "yaw": StringVar(value="0")
     },
     "preventThrottle": StringVar(value="0"),
     "disarmed": StringVar(value="0"),
-    "timestamp": StringVar(value="000000.0ms")
+    "timestamp": StringVar(value="0ms")
 }
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -49,47 +49,46 @@ sock.settimeout(0.1)
     
 def connection():
     last_ping = 0
-    last_update = 0
+    last_connect = 0
         
     while True:
+        now = time()
         try:
-            now = time()
             if (now - last_ping > PING_RATE):
                 sock.sendto(b'heartbeat', (DRONE_IP, DRONE_PORT))
                 last_ping = now
         
             raw, _ = sock.recvfrom(512)
             if raw:
-                last_update = now
                 message = raw.decode("utf-8")
+                status.set("Connected")
+                last_connect = now
                 if (message.startswith("$data")):
                     data = message.removeprefix("$data ").split(" ")
-                    if len(data) < 18: return
-                    parsed_data["outputs"][0].set(data[0])
-                    parsed_data["outputs"][1].set(data[1])
-                    parsed_data["outputs"][2].set(data[2])
-                    parsed_data["outputs"][3].set(data[3])
-                    parsed_data["hoverOnly"].set(data[4])
-                    parsed_data["pidOutputs"]["pitch"].set(data[5])
-                    parsed_data["pidOutputs"]["roll"].set(data[6])
-                    parsed_data["pidOutputs"]["yaw"].set(data[7])
-                    parsed_data["deltaTime"].set(f'{data[8]}ms')
-                    parsed_data["desired"]["throttle"].set(data[9])
-                    parsed_data["desired"]["pitch"].set(data[10])
-                    parsed_data["desired"]["roll"].set(data[11])
-                    parsed_data["desired"]["yaw"].set(data[12])
-                    parsed_data["desired"]["arm"].set(data[13])
-                    parsed_data["measured"]["pitch"].set(data[14])
-                    parsed_data["measured"]["roll"].set(data[15])
-                    parsed_data["measured"]["yaw"].set(data[16])
-                    parsed_data["preventThrottle"].set(data[17])
-                    parsed_data["disarmed"].set(data[18])
-                    parsed_data["timestamp"].set(f'{data[19]}ms')
-            if ((now - last_update) > MAX_UPDATE_RATE):
-                status.set("Disconnected")
-            else:
-                status.set("Connected")
+                    if len(data) >= 18:
+                        parsed_data["outputs"][0].set(data[0])
+                        parsed_data["outputs"][1].set(data[1])
+                        parsed_data["outputs"][2].set(data[2])
+                        parsed_data["outputs"][3].set(data[3])
+                        parsed_data["hoverOnly"].set(data[4])
+                        parsed_data["pidOutputs"]["pitch"].set(data[5])
+                        parsed_data["pidOutputs"]["roll"].set(data[6])
+                        parsed_data["pidOutputs"]["yaw"].set(data[7])
+                        parsed_data["deltaTime"].set(f'{data[8]}ms')
+                        parsed_data["desired"]["throttle"].set(data[9])
+                        parsed_data["desired"]["pitch"].set(data[10])
+                        parsed_data["desired"]["roll"].set(data[11])
+                        parsed_data["desired"]["yaw"].set(data[12])
+                        parsed_data["desired"]["arm"].set(data[13])
+                        parsed_data["measured"]["pitch"].set(data[14])
+                        parsed_data["measured"]["roll"].set(data[15])
+                        parsed_data["measured"]["yaw"].set(data[16])
+                        parsed_data["preventThrottle"].set(data[17])
+                        parsed_data["disarmed"].set(data[18])
+                        parsed_data["timestamp"].set(f'{data[19]}ms')
         except socket.timeout:
+            if (now - last_connect) > MAX_DISCONNECT:
+                status.set("Disconnected")
             continue
         except Exception as e:
             print(f'An exception occurred in the connection loop: {str(e)}')
