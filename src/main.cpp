@@ -23,8 +23,8 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(7, 0, 0);
-PID rollController(7, 0, 0);
+PID pitchController(15, 0, 15);
+PID rollController(15, 0, 15);
 PID yawController(0, 0, 0);
 // PID rollController(15, 0, 0);
 // PID yawController(9, 0, 0);
