@@ -48,11 +48,14 @@ parsed_data:dict[str, StringVar | dict[str, StringVar]] = {
     "timestamp": StringVar(value="0")
 }
     
+opened_graph = -1
+    
 class PIDGraph:
     MAX_SIZE = 200
-    def __init__(self, master:Frame, name:str, y_label:str):
+    def __init__(self, master:Frame, name:str, y_label:str, id:int):
         self.name = name
         self.master = master
+        self.id = id
         self.figure = Figure(figsize=(6, 4), dpi=100)
         self.ax = self.figure.add_subplot(111)
         self.ax.set_title(name)
@@ -68,16 +71,12 @@ class PIDGraph:
         self.time_data = []
         self.measured_data = []
         self.setpoint_data = []
-        self.queue_counter = 0
         
     def queue_data(self, measured:str, setpoint:str, time:str):
+        if opened_graph != self.id:
+            return
         try:
             self.queue.put_nowait((float(measured), float(setpoint), float(time)))
-            
-            if self.queue_counter + 1 > self.MAX_SIZE: # Cap the queue size, deleting old data
-                self.queue.get_nowait()
-            else:
-                self.queue_counter += 1
         except queue.Full:
             print(f'Graph "{self.name}"\'s queue is full.')
         except TypeError as et:
@@ -88,11 +87,12 @@ class PIDGraph:
         updated = False
         
         try:
-            while not self.queue.empty():
+            while True:
                 measured, setpoint, time = self.queue.get_nowait()
-                self.queue_counter -= 1
                 
-                if time <= self.time_data[len(self.time_data)-1]: # Delete data if graph restarts (moves back in time)
+                time_size = len(self.time_data)
+                
+                if time_size > 0 and time <= self.time_data[time_size-1]: # Delete data if graph restarts (moves back in time)
                     self.measured_data.clear()
                     self.setpoint_data.clear()
                     self.time_data.clear()
@@ -103,10 +103,14 @@ class PIDGraph:
                 
                 updated = True
                 
-                if len(self.time_data) > self.MAX_SIZE:
+                if time_size > self.MAX_SIZE:
                     self.measured_data.pop(0)
                     self.setpoint_data.pop(0)
                     self.time_data.pop(0)
+        except queue.Empty:
+            pass
+        except queue.Full:
+            print(f'Could not update graph "{self.name}": queue is full.')
         except Exception as e:
             print(f'Could not update graph "{self.name}": {str(e)}')
         if updated:
@@ -121,13 +125,13 @@ class PIDGraph:
 graph_notebook = ttk.Notebook(content)
         
 pitch_graph_frame = ttk.Frame(content)
-pitch_graph = PIDGraph(pitch_graph_frame, "Pitch", "Measured Pitch (deg)")
+pitch_graph = PIDGraph(pitch_graph_frame, "Pitch", "Measured Pitch (deg)", 0)
 
 roll_graph_frame = ttk.Frame(content)
-roll_graph = PIDGraph(roll_graph_frame, "Roll", "Measured Roll (deg)")
+roll_graph = PIDGraph(roll_graph_frame, "Roll", "Measured Roll (deg)", 1)
 
 yaw_graph_frame = ttk.Frame(content)
-yaw_graph = PIDGraph(yaw_graph_frame, "Yaw", "Measured Yaw (deg/s)")
+yaw_graph = PIDGraph(yaw_graph_frame, "Yaw", "Measured Yaw (deg/s)", 2)
 
 graph_notebook.add(pitch_graph_frame, text="Pitch")
 graph_notebook.add(roll_graph_frame, text="Roll")
@@ -136,20 +140,12 @@ graph_notebook.add(ttk.Label(content, text="No graphs selected."), text="None")
 graph_notebook.select(3)
 
 def update_graphs():
-    opened = graph_notebook.index(graph_notebook.select())
-    if (opened == 0):
-        pitch_graph.update()
-        roll_graph.clear()
-        yaw_graph.clear()
-    elif (opened == 1):
-        roll_graph.update()
-        pitch_graph.clear()
-        yaw_graph.clear()
-    elif (opened == 2):
-        yaw_graph.update()
-        pitch_graph.clear()
-        roll_graph.clear()
-    root.after(100, update_graphs)
+    global opened_graph
+    opened_graph = graph_notebook.index(graph_notebook.select())
+    pitch_graph.update()
+    roll_graph.update()
+    yaw_graph.update()
+    root.after(30, update_graphs)
     
 def connection():
     last_ping = 0
