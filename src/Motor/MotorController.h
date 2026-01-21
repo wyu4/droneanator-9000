@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 const int MOTOR_FREQUENCY = 50; // Hz
-const int MOTOR_RESOLUTION = 12; // Bits
+const int MOTOR_RESOLUTION = 11; // Bits
 const int PWM_MIN = 1000;              // Minimum pulse width in microseconds
 const int PWM_MAX = 2000;           // Maximum pulse width in microseconds
 
