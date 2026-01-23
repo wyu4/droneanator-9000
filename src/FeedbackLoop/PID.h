@@ -40,6 +40,6 @@ public:
     float calculate(const float &feedback, const unsigned long &deltaTime);
 
 private:
-    float errorSum = 0;       // The total sum of past errors
+    double errorSum = 0;       // The total sum of past errors
     float lastError = 0;      // The previous measured error
 };

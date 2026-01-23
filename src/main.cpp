@@ -12,7 +12,7 @@
 #define mapNumber(input, min, max, outMin, outMax) ((input - min) / (max - min) * (outMax - outMin) + outMin);
 
 const boolean hoverOnly = false;
-const float maxThrottle = 1800; // Microseconds
+const float maxThrottle = 1800; // MicrosecondsP
 
 MotorController motor1(41, 1); // Front right (clockwise)
 MotorController motor2(1, 2);  // Back right (counter-clockwise)
@@ -23,9 +23,9 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(15, 0, 15);
-PID rollController(15, 0, 15);
-PID yawController(0, 0, 0);
+PID pitchController(2.1, 0, 10000);
+PID rollController(2.1, 0, 10000);
+PID yawController(6, 0, 0);
 // PID rollController(15, 0, 0);
 // PID yawController(9, 0, 0);
 float pidPitchOutput = 0;
@@ -122,53 +122,19 @@ void setup()
 
 	Serial.println("Setting up motor controllers...");
 
-	pitchController.errorSumClamp = 400;
-	rollController.errorSumClamp = 400;
-	yawController.errorSumClamp = 400;          
+	// pitchController.errorSumClamp = 400;
+	// rollController.errorSumClamp = 400;
+	// yawController.errorSumClamp = 400;          
 
 	delay(1000);
 	Serial.println(">> Successfully set up motor controllers...");
 }
 
-void loop()
+/**
+ * Code that handles reading user input & motor output
+ */
+void droneLoop() 
 {
-	const unsigned long currentTime = micros();
-	deltaTime = currentTime - lastTime;
-	if (deltaTime == 0)
-		deltaTime = 1;
-	if (lastTime == 0)
-	{ // If lastTime is invalid
-		lastTime = currentTime;
-		stop();
-		return;
-	}
-	lastTime = currentTime;
-
-	updateReceiver();
-
-	getRawAxis(rawAxisReadings);
-
-	measuredRoll = rawAxisReadings[1];
-	measuredPitch = -rawAxisReadings[2];
-
-	// Handling average yaw velocities
-	sumYawVelocities -= measuredYawVelocities[yawBufferIndex];
-	measuredYawVelocities[yawBufferIndex] = rawAxisReadings[0];
-	sumYawVelocities += rawAxisReadings[0];
-
-	yawBufferIndex = (yawBufferIndex + 1) % yawBufferSize; // Wrapping the selected index
-
-	if (yawBufferCounter < yawBufferSize - 1) // Making sure loop runs enough time to have enough data
-	{
-		yawBufferCounter += 1;
-		delay(10); // BNO055 outputs 100 samples/second
-		return;
-	};
-
-	averageYawVelocities = sumYawVelocities / yawBufferSize;
-
-	sendTelemetry(currentTime);
-
 	if (readChannel(0) < CONTROLLER_MIN_RATE)
 	{
 		stop();
@@ -238,4 +204,48 @@ void loop()
 	motor2.set(output2);
 	motor3.set(output3);
 	motor4.set(output4);
+}
+
+void loop()
+{
+	const unsigned long currentTime = micros();
+	deltaTime = currentTime - lastTime;
+	if (deltaTime == 0)
+		deltaTime = 1;
+	if (lastTime == 0)
+	{ // If lastTime is invalid
+		lastTime = currentTime;
+		stop();
+		return;
+	}
+	lastTime = currentTime;
+
+	updateReceiver();
+
+	getRawAxis(rawAxisReadings);
+
+	measuredRoll = rawAxisReadings[1];
+	measuredPitch = -rawAxisReadings[2];
+
+	// Handling average yaw velocities
+	sumYawVelocities -= measuredYawVelocities[yawBufferIndex];
+	measuredYawVelocities[yawBufferIndex] = rawAxisReadings[0];
+	sumYawVelocities += rawAxisReadings[0];
+
+	yawBufferIndex = (yawBufferIndex + 1) % yawBufferSize; // Wrapping the selected index
+
+	if (yawBufferCounter < yawBufferSize - 1) // Making sure loop runs enough time to have enough data
+	{
+		stop();
+		
+		yawBufferCounter += 1;
+		delay(10); // BNO055 outputs 100 samples/second
+		return;
+	};
+
+	averageYawVelocities = sumYawVelocities / yawBufferSize;
+
+	droneLoop();
+	
+	sendTelemetry(currentTime);
 }

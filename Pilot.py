@@ -279,8 +279,6 @@ ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][0],
 ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][2], relief="sunken").grid(column=0, row=2) # BL
 ttk.Label(output_frame, anchor="center", textvariable=parsed_data["outputs"][1], relief="sunken").grid(column=1, row=2) # BR
 
-
-
 footer_frame.grid(column=0, row=3, columnspan=5)
 hover_frame.grid(column=0)
 ttk.Label(hover_frame, text="Hover Mode", anchor="center", font=("Helvetica", 12, "bold")).grid(column=0, row=0)
