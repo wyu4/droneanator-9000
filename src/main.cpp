@@ -23,8 +23,8 @@ int output2 = 0;
 int output3 = 0;
 int output4 = 0;
 
-PID pitchController(2.1, 0, 10000);
-PID rollController(2.1, 0, 10000);
+PID pitchController(1.6, 0.25, 0.8);
+PID rollController(1.6, 0.25, 0.8);
 PID yawController(6, 0, 0);
 // PID rollController(15, 0, 0);
 // PID yawController(9, 0, 0);
@@ -191,9 +191,9 @@ void droneLoop()
 	rollController.setpoint = desiredRoll;
 	yawController.setpoint = desiredYawVelocity;
 
-	pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime);
-	pidYawOutput = yawController.calculate(averageYawVelocities, deltaTime);
-	pidRollOutput = rollController.calculate(measuredRoll, deltaTime);
+	pidPitchOutput = pitchController.calculate(measuredPitch, deltaTime / 1000000.0);
+	pidYawOutput = yawController.calculate(averageYawVelocities, deltaTime / 1000000.0);
+	pidRollOutput = rollController.calculate(measuredRoll, deltaTime / 1000000.0);
 
 	output1 = (int)round(desiredThrottle - pidRollOutput - pidPitchOutput + pidYawOutput); // FR CW
 	output2 = (int)round(desiredThrottle - pidRollOutput + pidPitchOutput - pidYawOutput); // BR CCW

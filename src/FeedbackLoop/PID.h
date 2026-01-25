@@ -34,10 +34,10 @@ public:
      * @brief Calculates the output given a feedback value
      *
      * @param feedback Current input value
-     * @param deltaTime Milliseconds elapsed since last loop run
+     * @param deltaTime Seconds elapsed since last loop run
      * @return PID output
      */
-    float calculate(const float &feedback, const unsigned long &deltaTime);
+    float calculate(const float &feedback, float deltaTime);
 
 private:
     double errorSum = 0;       // The total sum of past errors

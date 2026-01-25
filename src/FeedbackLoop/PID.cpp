@@ -11,7 +11,7 @@ void PID::reset()
 	this->lastError = 0;
 }
 
-float PID::calculate(const float &feedback, const unsigned long &deltaTime)
+float PID::calculate(const float &feedback, float deltaTime)
 {
 	float currentError = this->setpoint - feedback;
 	if (tolerance >= 0 && abs(currentError) <= tolerance)
